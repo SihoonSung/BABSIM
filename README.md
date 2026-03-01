@@ -1,9 +1,8 @@
 # BABSIM
-
-<<<<<<< HEAD
 Sihoon Sung
 Minseo Kim
 Chiu Choi
+Seongbeen Na
 =======
 미국 거주 한국인 유학생/직장인을 위한 냉장고 기반 집밥 레시피 추천 앱. 이미 가지고 있는 재료와 요리 실력에 맞춰 현실적으로 만들 수 있는 한식 레시피를 추천한다.
 
