@@ -1,5 +1,6 @@
 import 'package:go_router/go_router.dart';
 
+import '../../features/home/presentation/home_screen.dart';
 import '../../features/fridge/presentation/fridge_screen.dart';
 import '../../features/recipes/presentation/recipe_list_screen.dart';
 import '../../features/recipes/presentation/recipe_detail_screen.dart';
@@ -17,11 +18,13 @@ import '../../features/profile/presentation/settings_screen.dart';
 import '../shell/main_shell.dart';
 
 final appRouter = GoRouter(
-  initialLocation: '/fridge',
+  initialLocation: '/home',
   routes: [
+    GoRoute(path: '/', redirect: (context, state) => '/home'),
     ShellRoute(
       builder: (context, state, child) => MainShell(child: child),
       routes: [
+        GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
         GoRoute(
           path: '/fridge',
           builder: (context, state) => const FridgeScreen(),
