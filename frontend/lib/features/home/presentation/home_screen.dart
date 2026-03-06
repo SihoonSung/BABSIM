@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../recipes/data/saved_recipes_store.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const ColoredBox(
+    return ColoredBox(
       color: Color(0xFFF3F3F1),
       child: SafeArea(
         bottom: false,
@@ -16,29 +17,30 @@ class HomeScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _TopHeroSection(),
-              SizedBox(height: 28),
+              const _TopHeroSection(),
+              const SizedBox(height: 28),
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 22),
+                padding: const EdgeInsets.symmetric(horizontal: 22),
                 child: _SectionHeader(
                   title: 'Expiring Soon',
                   actionText: 'View All',
                   showAccentDot: true,
+                  onActionTap: () => context.go('/fridge'),
                 ),
               ),
-              SizedBox(height: 18),
-              _ExpiringSoonList(),
-              SizedBox(height: 36),
+              const SizedBox(height: 18),
+              const _ExpiringSoonList(),
+              const SizedBox(height: 36),
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 22),
-                child: _SectionHeader(title: 'For Your Dinner'),
+                padding: const EdgeInsets.symmetric(horizontal: 22),
+                child: const _SectionHeader(title: 'For Your Dinner'),
               ),
-              SizedBox(height: 18),
+              const SizedBox(height: 18),
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 22),
-                child: _FeaturedRecipeCard(),
+                padding: const EdgeInsets.symmetric(horizontal: 22),
+                child: const _FeaturedRecipeCard(),
               ),
-              SizedBox(height: 72),
+              const SizedBox(height: 72),
             ],
           ),
         ),
@@ -62,9 +64,9 @@ class _TopHeroSection extends StatelessWidget {
         ),
       ),
       padding: const EdgeInsets.fromLTRB(22, 30, 22, 32),
-      child: const Column(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [_Header(), SizedBox(height: 30), _SavedRecipesCard()],
+        children: const [_Header(), SizedBox(height: 30), _SavedRecipesCard()],
       ),
     );
   }
@@ -180,17 +182,21 @@ class _SavedRecipesCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 16),
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFF39554),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.arrow_forward_rounded,
-                    color: Colors.white,
-                    size: 22,
+                GestureDetector(
+                  onTap: () => context.push('/saved-recipes'),
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFF39554),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.arrow_forward_rounded,
+                      color: Colors.white,
+                      size: 22,
+                    ),
                   ),
                 ),
               ],
@@ -206,11 +212,13 @@ class _SectionHeader extends StatelessWidget {
   final String title;
   final String? actionText;
   final bool showAccentDot;
+  final VoidCallback? onActionTap;
 
   const _SectionHeader({
     required this.title,
     this.actionText,
     this.showAccentDot = false,
+    this.onActionTap,
   });
 
   @override
@@ -242,12 +250,16 @@ class _SectionHeader extends StatelessWidget {
           ],
         ),
         if (actionText != null)
-          Text(
-            actionText!,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFFF18B45),
+          GestureDetector(
+            onTap: onActionTap,
+            behavior: HitTestBehavior.opaque,
+            child: Text(
+              actionText!,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFFF18B45),
+              ),
             ),
           ),
       ],
@@ -384,6 +396,8 @@ class _ExpiringItem extends StatelessWidget {
 class _FeaturedRecipeCard extends StatelessWidget {
   const _FeaturedRecipeCard();
 
+  static const int _featuredRecipeId = 2;
+
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
@@ -519,17 +533,34 @@ class _FeaturedRecipeCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    Container(
-                      width: 54,
-                      height: 54,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF58473B).withOpacity(0.7),
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      child: const Icon(
-                        Icons.favorite_rounded,
-                        color: Color(0xFFF39A57),
-                      ),
+                    ValueListenableBuilder<Set<int>>(
+                      valueListenable: SavedRecipesStore.savedRecipeIds,
+                      builder: (context, savedRecipeIds, child) {
+                        final isSaved = savedRecipeIds.contains(
+                          _featuredRecipeId,
+                        );
+                        return GestureDetector(
+                          onTap: () =>
+                              SavedRecipesStore.toggleSaved(_featuredRecipeId),
+                          behavior: HitTestBehavior.opaque,
+                          child: Container(
+                            width: 54,
+                            height: 54,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF58473B).withOpacity(0.7),
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            child: Icon(
+                              isSaved
+                                  ? Icons.favorite_rounded
+                                  : Icons.favorite_border_rounded,
+                              color: isSaved
+                                  ? const Color(0xFFF39A57)
+                                  : Colors.white,
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),

@@ -1,16 +1,27 @@
 import 'package:go_router/go_router.dart';
 
+import '../../features/auth/presentation/login_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
 import '../../features/fridge/presentation/fridge_screen.dart';
 import '../../features/recipes/presentation/recipe_list_screen.dart';
 import '../../features/recipes/presentation/recipe_detail_screen.dart';
+import '../../features/recipes/presentation/saved_recipes_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
 import '../shell/main_shell.dart';
 
 final appRouter = GoRouter(
-  initialLocation: '/home',
+  initialLocation: '/login',
   routes: [
-    GoRoute(path: '/', redirect: (context, state) => '/home'),
+    GoRoute(path: '/', redirect: (context, state) => '/login'),
+    GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
+    GoRoute(
+      path: '/saved-recipies',
+      redirect: (context, state) => '/saved-recipes',
+    ),
+    GoRoute(
+      path: '/saved-recipes',
+      builder: (context, state) => const SavedRecipesScreen(),
+    ),
     ShellRoute(
       builder: (context, state, child) => MainShell(child: child),
       routes: [

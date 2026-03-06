@@ -29,29 +29,34 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
     // 검색 필터
     if (_searchQuery.isNotEmpty) {
       recipes = recipes
-          .where((r) => r.name.toLowerCase().contains(_searchQuery.toLowerCase()))
+          .where(
+            (r) => r.name.toLowerCase().contains(_searchQuery.toLowerCase()),
+          )
           .toList();
     }
 
     // 고급 필터
     if (_filter.cookingTime != null) {
-      recipes = recipes.where((r) => r.cookingTime == _filter.cookingTime).toList();
+      recipes = recipes
+          .where((r) => r.cookingTime == _filter.cookingTime)
+          .toList();
     }
     if (_filter.difficulty != null) {
-      recipes = recipes.where((r) => r.difficulty == _filter.difficulty).toList();
+      recipes = recipes
+          .where((r) => r.difficulty == _filter.difficulty)
+          .toList();
     }
     if (_filter.mealTypes.isNotEmpty) {
-      recipes = recipes.where((r) => _filter.mealTypes.contains(r.mealType)).toList();
+      recipes = recipes
+          .where((r) => _filter.mealTypes.contains(r.mealType))
+          .toList();
     }
 
     return recipes;
   }
 
   void _openFilters() async {
-    final result = await showRecipeFilterSheet(
-      context,
-      currentFilter: _filter,
-    );
+    final result = await showRecipeFilterSheet(context, currentFilter: _filter);
     if (result != null) {
       setState(() => _filter = result);
     }
@@ -97,11 +102,19 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
                       onChanged: (v) => setState(() => _searchQuery = v),
                       decoration: InputDecoration(
                         hintText: 'Search recipes...',
-                        hintStyle: const TextStyle(color: Color(0xFFAAAAAA), fontSize: 14),
-                        prefixIcon: const Icon(Icons.search, color: Color(0xFFAAAAAA)),
+                        hintStyle: const TextStyle(
+                          color: Color(0xFFAAAAAA),
+                          fontSize: 14,
+                        ),
+                        prefixIcon: const Icon(
+                          Icons.search,
+                          color: Color(0xFFAAAAAA),
+                        ),
                         filled: true,
                         fillColor: const Color(0xFFF5F5F5),
-                        contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 12,
+                        ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
@@ -129,7 +142,9 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
                             : const Color(0xFFF5F5F5),
                         borderRadius: BorderRadius.circular(12),
                         border: _filter.hasActiveFilters
-                            ? Border.all(color: AppTheme.primary.withValues(alpha: 0.3))
+                            ? Border.all(
+                                color: AppTheme.primary.withValues(alpha: 0.3),
+                              )
                             : null,
                       ),
                       child: Icon(
@@ -160,9 +175,14 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
                     onTap: () => setState(() => _selectedCategory = cat),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 150),
-                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
-                        color: isSelected ? const Color(0xFF1A1A1A) : Colors.white,
+                        color: isSelected
+                            ? const Color(0xFF1A1A1A)
+                            : Colors.white,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
                           color: isSelected
@@ -174,8 +194,12 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
                         cat,
                         style: TextStyle(
                           fontSize: 13,
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                          color: isSelected ? Colors.white : const Color(0xFF888888),
+                          fontWeight: isSelected
+                              ? FontWeight.w600
+                              : FontWeight.normal,
+                          color: isSelected
+                              ? Colors.white
+                              : const Color(0xFF888888),
                         ),
                       ),
                     ),
@@ -190,17 +214,19 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
                   ? _buildEmptyState()
                   : GridView.builder(
                       padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 14,
-                        mainAxisSpacing: 14,
-                        childAspectRatio: 0.72,
-                      ),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                            childAspectRatio: 0.82,
+                          ),
                       itemCount: recipes.length,
                       itemBuilder: (context, index) {
                         return _RecipeCard(
                           recipe: recipes[index],
-                          onTap: () => context.go('/recipes/${recipes[index].id}'),
+                          onTap: () =>
+                              context.go('/recipes/${recipes[index].id}'),
                         );
                       },
                     ),
@@ -250,11 +276,11 @@ class _RecipeCard extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 10,
+              blurRadius: 8,
               offset: const Offset(0, 2),
             ),
           ],
@@ -268,7 +294,9 @@ class _RecipeCard extends StatelessWidget {
               child: Stack(
                 children: [
                   ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(14),
+                    ),
                     child: Image.network(
                       recipe.imageUrl,
                       width: double.infinity,
@@ -276,17 +304,23 @@ class _RecipeCard extends StatelessWidget {
                       errorBuilder: (_, __, ___) => Container(
                         color: const Color(0xFFF0F0F0),
                         child: const Center(
-                          child: Icon(Icons.restaurant, size: 40, color: Color(0xFFCCCCCC)),
+                          child: Icon(
+                            Icons.restaurant,
+                            size: 40,
+                            color: Color(0xFFCCCCCC),
+                          ),
                         ),
                       ),
                     ),
                   ),
-                  // 별점 배지
                   Positioned(
                     top: 8,
                     left: 8,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
@@ -300,7 +334,11 @@ class _RecipeCard extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.star_rounded, size: 14, color: Color(0xFFFFB800)),
+                          const Icon(
+                            Icons.star_rounded,
+                            size: 14,
+                            color: Color(0xFFFFB800),
+                          ),
                           const SizedBox(width: 3),
                           Text(
                             recipe.rating.toString(),
@@ -321,7 +359,7 @@ class _RecipeCard extends StatelessWidget {
             Expanded(
               flex: 2,
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+                padding: const EdgeInsets.fromLTRB(9, 7, 9, 8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -329,7 +367,7 @@ class _RecipeCard extends StatelessWidget {
                     Text(
                       recipe.category.toUpperCase(),
                       style: const TextStyle(
-                        fontSize: 10,
+                        fontSize: 9,
                         fontWeight: FontWeight.w700,
                         color: AppTheme.primary,
                         letterSpacing: 0.5,
@@ -340,7 +378,7 @@ class _RecipeCard extends StatelessWidget {
                     Text(
                       recipe.name,
                       style: const TextStyle(
-                        fontSize: 14,
+                        fontSize: 13,
                         fontWeight: FontWeight.w700,
                         color: Color(0xFF1A1A1A),
                       ),
@@ -360,7 +398,7 @@ class _RecipeCard extends StatelessWidget {
                         Text(
                           '${recipe.cookTimeMinutes}m',
                           style: const TextStyle(
-                            fontSize: 12,
+                            fontSize: 11,
                             color: Color(0xFFAAAAAA),
                           ),
                         ),
