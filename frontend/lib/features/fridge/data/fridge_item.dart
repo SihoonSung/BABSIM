@@ -1,39 +1,66 @@
+enum StorageType { refrigerated, roomTemp, frozen }
+
 class FridgeItem {
   final int id;
-  final String nameKo;
+  final String name;
   final String category;
   final String? quantity;
+  final int? daysUntilExpiry;
+  final StorageType storageType;
+  final bool expiryReminder;
 
   const FridgeItem({
     required this.id,
-    required this.nameKo,
+    required this.name,
     required this.category,
     this.quantity,
+    this.daysUntilExpiry,
+    this.storageType = StorageType.refrigerated,
+    this.expiryReminder = true,
   });
+
+  FridgeItem copyWith({
+    String? name,
+    String? category,
+    String? quantity,
+    int? daysUntilExpiry,
+    bool clearExpiry = false,
+    StorageType? storageType,
+    bool? expiryReminder,
+  }) {
+    return FridgeItem(
+      id: id,
+      name: name ?? this.name,
+      category: category ?? this.category,
+      quantity: quantity ?? this.quantity,
+      daysUntilExpiry: clearExpiry ? null : (daysUntilExpiry ?? this.daysUntilExpiry),
+      storageType: storageType ?? this.storageType,
+      expiryReminder: expiryReminder ?? this.expiryReminder,
+    );
+  }
 }
 
-const fridgeCategories = ['전체', '채소', '육류', '유제품', '양념', '곡물', '기타'];
+const fridgeCategories = ['All', 'Vegetables', 'Meat', 'Dairy', 'Grains', 'Sauce', 'Other'];
 
-// 카테고리별 아이콘 매핑
 const categoryEmojis = {
-  '채소': '🥦',
-  '육류': '🥩',
-  '유제품': '🧀',
-  '양념': '🧂',
-  '곡물': '🌾',
-  '기타': '🫙',
+  'Vegetables': '🥦',
+  'Meat': '🥩',
+  'Dairy': '🧀',
+  'Sauce': '🧂',
+  'Grains': '🌾',
+  'Other': '🫙',
 };
 
-// 임시 더미 데이터
-final dummyFridgeItems = [
-  const FridgeItem(id: 1, nameKo: '계란', category: '기타', quantity: '6개'),
-  const FridgeItem(id: 2, nameKo: '당근', category: '채소', quantity: '2개'),
-  const FridgeItem(id: 3, nameKo: '대파', category: '채소', quantity: '1단'),
-  const FridgeItem(id: 4, nameKo: '돼지고기', category: '육류', quantity: '300g'),
-  const FridgeItem(id: 5, nameKo: '두부', category: '기타', quantity: '1모'),
-  const FridgeItem(id: 6, nameKo: '간장', category: '양념', quantity: '충분'),
-  const FridgeItem(id: 7, nameKo: '고추장', category: '양념', quantity: '충분'),
-  const FridgeItem(id: 8, nameKo: '우유', category: '유제품', quantity: '1L'),
-  const FridgeItem(id: 9, nameKo: '양파', category: '채소', quantity: '3개'),
-  const FridgeItem(id: 10, nameKo: '쌀', category: '곡물', quantity: '2kg'),
+final dummyMainFridgeItems = [
+  const FridgeItem(id: 1, name: 'Milk', category: 'Dairy', quantity: '1L', daysUntilExpiry: 1),
+  const FridgeItem(id: 2, name: 'Eggs', category: 'Other', quantity: '6 pcs', daysUntilExpiry: 3),
+  const FridgeItem(id: 3, name: 'Carrots', category: 'Vegetables', quantity: '3 pcs', daysUntilExpiry: 5),
+  const FridgeItem(id: 4, name: 'Beef', category: 'Meat', quantity: '500g', daysUntilExpiry: 2),
+  const FridgeItem(id: 5, name: 'Tofu', category: 'Other', quantity: '1 block', daysUntilExpiry: 4),
+  const FridgeItem(id: 6, name: 'Soy Sauce', category: 'Sauce', quantity: 'enough'),
+];
+
+final dummyKimchiFridgeItems = [
+  const FridgeItem(id: 101, name: 'Kimchi', category: 'Other', quantity: '2kg', daysUntilExpiry: 30),
+  const FridgeItem(id: 102, name: 'Radish Kimchi', category: 'Vegetables', quantity: '1kg', daysUntilExpiry: 20),
 ];
