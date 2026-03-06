@@ -5,13 +5,15 @@ import '../../features/home/presentation/home_screen.dart';
 import '../../features/fridge/presentation/fridge_screen.dart';
 import '../../features/recipes/presentation/recipe_list_screen.dart';
 import '../../features/recipes/presentation/recipe_detail_screen.dart';
-import '../../features/recipes/presentation/saved_recipes_screen.dart';
+import '../../features/recipes/presentation/saved_recipes_screen.dart'
+    as recipes_saved;
 import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/profile/presentation/edit_profile_screen.dart';
 import '../../features/profile/presentation/allergies_screen.dart';
 import '../../features/profile/presentation/disliked_ingredients_screen.dart';
 import '../../features/profile/presentation/kitchen_tools_screen.dart';
-import '../../features/profile/presentation/saved_recipes_screen.dart';
+import '../../features/profile/presentation/saved_recipes_screen.dart'
+    as profile_saved;
 import '../../features/profile/presentation/cooked_recipes_screen.dart';
 import '../../features/profile/presentation/cooked_photo_gallery_screen.dart';
 import '../../features/profile/presentation/cooked_recipe_photos_screen.dart';
@@ -30,7 +32,7 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/saved-recipes',
-      builder: (context, state) => const SavedRecipesScreen(),
+      builder: (context, state) => const recipes_saved.SavedRecipesScreen(),
     ),
     ShellRoute(
       builder: (context, state, child) => MainShell(child: child),
@@ -74,7 +76,8 @@ final appRouter = GoRouter(
             ),
             GoRoute(
               path: 'saved',
-              builder: (context, state) => const SavedRecipesScreen(),
+              builder: (context, state) =>
+                  const profile_saved.SavedRecipesScreen(),
             ),
             GoRoute(
               path: 'cooked',
