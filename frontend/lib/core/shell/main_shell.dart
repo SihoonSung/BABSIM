@@ -5,6 +5,13 @@ import '../theme/app_theme.dart';
 
 class MainShell extends StatelessWidget {
   final Widget child;
+  static const _tabRoutes = <String>[
+    '/home',
+    '/fridge',
+    '/recipes',
+    '/saved-recipes',
+    '/profile',
+  ];
 
   const MainShell({super.key, required this.child});
 
@@ -13,20 +20,21 @@ class MainShell extends StatelessWidget {
     if (location.startsWith('/home')) return 0;
     if (location.startsWith('/fridge')) return 1;
     if (location.startsWith('/recipes')) return 2;
+    if (location.startsWith('/saved-recipes')) return 3;
     if (location.startsWith('/profile')) return 4;
     return 0;
   }
+
+  bool _showBottomNav(String location) => _tabRoutes.contains(location);
 
   @override
   Widget build(BuildContext context) {
     final location = GoRouterState.of(context).uri.path;
     final currentIndex = _currentIndex(context);
-    final hideBottomNav = RegExp(r'^/recipes/\d+$').hasMatch(location);
     return Scaffold(
       body: child,
-      bottomNavigationBar: hideBottomNav
-          ? null
-          : Container(
+      bottomNavigationBar: _showBottomNav(location)
+          ? Container(
               decoration: const BoxDecoration(
                 color: Colors.white,
                 border: Border(top: BorderSide(color: Color(0xFFD3D3D3))),
@@ -59,11 +67,11 @@ class MainShell extends StatelessWidget {
                         onTap: () => context.go('/recipes'),
                       ),
                       _NavItem(
-                        icon: Icons.group_outlined,
-                        selectedIcon: Icons.group,
+                        icon: Icons.bookmark_border_rounded,
+                        selectedIcon: Icons.bookmark_rounded,
                         index: 3,
                         currentIndex: currentIndex,
-                        onTap: () {},
+                        onTap: () => context.go('/saved-recipes'),
                       ),
                       _NavItem(
                         icon: Icons.person_outline,
@@ -76,7 +84,8 @@ class MainShell extends StatelessWidget {
                   ),
                 ),
               ),
-            ),
+            )
+          : null,
     );
   }
 }

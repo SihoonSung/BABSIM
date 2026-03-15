@@ -2,6 +2,8 @@ enum StorageType { refrigerated, roomTemp, frozen }
 
 class FridgeItem {
   final int id;
+  final int? fridgeId;
+  final String? fridgeName;
   final String name;
   final String category;
   final String? quantity;
@@ -11,6 +13,8 @@ class FridgeItem {
 
   const FridgeItem({
     required this.id,
+    this.fridgeId,
+    this.fridgeName,
     required this.name,
     required this.category,
     this.quantity,
@@ -20,6 +24,8 @@ class FridgeItem {
   });
 
   FridgeItem copyWith({
+    int? fridgeId,
+    String? fridgeName,
     String? name,
     String? category,
     String? quantity,
@@ -30,6 +36,8 @@ class FridgeItem {
   }) {
     return FridgeItem(
       id: id,
+      fridgeId: fridgeId ?? this.fridgeId,
+      fridgeName: fridgeName ?? this.fridgeName,
       name: name ?? this.name,
       category: category ?? this.category,
       quantity: quantity ?? this.quantity,
@@ -37,6 +45,52 @@ class FridgeItem {
       storageType: storageType ?? this.storageType,
       expiryReminder: expiryReminder ?? this.expiryReminder,
     );
+  }
+
+  factory FridgeItem.fromJson(Map<String, dynamic> json) {
+    return FridgeItem(
+      id: json['id'] as int,
+      fridgeId: json['fridge_id'] as int?,
+      fridgeName: json['fridge_name'] as String?,
+      name: (json['name'] ?? json['ingredient_name_ko']) as String,
+      category: (json['category'] ?? json['ingredient_category']) as String,
+      quantity: json['quantity'] as String?,
+      daysUntilExpiry: json['days_until_expiry'] as int?,
+      storageType: storageTypeFromApi(json['storage_type'] as String?),
+      expiryReminder: json['expiry_reminder'] as bool? ?? true,
+    );
+  }
+
+  Map<String, dynamic> toUpdateJson() {
+    return {
+      'quantity': quantity,
+      'storage_type': storageTypeToApi(storageType),
+      'days_until_expiry': daysUntilExpiry,
+      'expiry_reminder': expiryReminder,
+    };
+  }
+}
+
+StorageType storageTypeFromApi(String? value) {
+  switch (value) {
+    case 'room_temp':
+      return StorageType.roomTemp;
+    case 'frozen':
+      return StorageType.frozen;
+    case 'refrigerated':
+    default:
+      return StorageType.refrigerated;
+  }
+}
+
+String storageTypeToApi(StorageType value) {
+  switch (value) {
+    case StorageType.roomTemp:
+      return 'room_temp';
+    case StorageType.frozen:
+      return 'frozen';
+    case StorageType.refrigerated:
+      return 'refrigerated';
   }
 }
 

@@ -1,9 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../data/fridge_item.dart';
 import '../../../core/theme/app_theme.dart';
 
-void showIngredientDetail(BuildContext context, FridgeItem item, void Function(FridgeItem) onSave) {
+void showIngredientDetail(
+  BuildContext context,
+  FridgeItem item,
+  FutureOr<void> Function(FridgeItem) onSave,
+) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
@@ -15,7 +21,7 @@ void showIngredientDetail(BuildContext context, FridgeItem item, void Function(F
 
 class IngredientDetailSheet extends StatefulWidget {
   final FridgeItem item;
-  final void Function(FridgeItem updated) onSave;
+  final FutureOr<void> Function(FridgeItem updated) onSave;
 
   const IngredientDetailSheet({super.key, required this.item, required this.onSave});
 

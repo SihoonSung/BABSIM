@@ -1,9 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
 
 class AddIngredientSheet extends StatelessWidget {
-  final void Function(String name, String category, String quantity) onAdd;
+  final FutureOr<void> Function(String name, String category, String quantity) onAdd;
 
   const AddIngredientSheet({super.key, required this.onAdd});
 
@@ -147,7 +149,7 @@ class _OptionCard extends StatelessWidget {
 }
 
 class _ManualAddSheet extends StatefulWidget {
-  final void Function(String name, String category, String quantity) onAdd;
+  final FutureOr<void> Function(String name, String category, String quantity) onAdd;
 
   const _ManualAddSheet({required this.onAdd});
 

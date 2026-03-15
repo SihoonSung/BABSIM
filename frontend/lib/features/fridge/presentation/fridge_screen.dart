@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:dio/dio.dart';
 
+import '../../../core/api/api_client.dart';
 import '../data/fridge_item.dart';
 import '../../../core/theme/app_theme.dart';
 import 'add_ingredient_sheet.dart';
@@ -14,15 +16,34 @@ class FridgeScreen extends StatefulWidget {
 }
 
 class _FridgeScreenState extends State<FridgeScreen> {
+  static const _sampleUserId = '11111111-1111-1111-1111-111111111111';
+
+  final Dio _dio = ApiClient.instance.dio;
   int _fridgeTab = 0;
   String _selectedCategory = 'All';
-  final List<FridgeItem> _mainItems = List.from(dummyMainFridgeItems);
-  final List<FridgeItem> _kimchiItems = List.from(dummyKimchiFridgeItems);
+  List<_FridgeTabData> _fridges = [
+    _FridgeTabData(
+      id: 1,
+      name: 'Main Fridge',
+      items: List.from(dummyMainFridgeItems),
+    ),
+    _FridgeTabData(
+      id: 2,
+      name: 'Kimchi Fridge',
+      items: List.from(dummyKimchiFridgeItems),
+    ),
+  ];
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   bool _isEditing = false;
+  bool _isLoading = true;
+  String? _errorMessage;
 
-  List<FridgeItem> get _currentItems => _fridgeTab == 0 ? _mainItems : _kimchiItems;
+  List<FridgeItem> get _currentItems {
+    if (_fridges.isEmpty) return const [];
+    final index = _fridgeTab.clamp(0, _fridges.length - 1);
+    return _fridges[index].items;
+  }
 
   List<FridgeItem> get _filtered {
     var items = _currentItems;
@@ -35,26 +56,124 @@ class _FridgeScreenState extends State<FridgeScreen> {
     return items;
   }
 
-  void _removeItem(int id) {
-    setState(() {
-      if (_fridgeTab == 0) {
-        _mainItems.removeWhere((e) => e.id == id);
-      } else {
-        _kimchiItems.removeWhere((e) => e.id == id);
-      }
-    });
+  int? get _currentFridgeId {
+    if (_fridges.isEmpty) return null;
+    return _fridges[_fridgeTab.clamp(0, _fridges.length - 1)].id;
   }
 
-  void _updateItem(FridgeItem updated) {
+  @override
+  void initState() {
+    super.initState();
+    _loadFridge();
+  }
+
+  Future<void> _loadFridge() async {
     setState(() {
-      if (_fridgeTab == 0) {
-        final index = _mainItems.indexWhere((e) => e.id == updated.id);
-        if (index != -1) _mainItems[index] = updated;
-      } else {
-        final index = _kimchiItems.indexWhere((e) => e.id == updated.id);
-        if (index != -1) _kimchiItems[index] = updated;
-      }
+      _isLoading = true;
+      _errorMessage = null;
     });
+    try {
+      final response = await _dio.get<Map<String, dynamic>>('/app/bootstrap/$_sampleUserId');
+      final data = response.data ?? <String, dynamic>{};
+      final fridgesJson = (data['fridges'] as List<dynamic>? ?? const []);
+      final itemsJson = (data['fridge_items'] as List<dynamic>? ?? const []);
+      final items = itemsJson
+          .map((item) => FridgeItem.fromJson(item as Map<String, dynamic>))
+          .toList();
+      final fridges = fridgesJson.map((fridge) {
+        final json = fridge as Map<String, dynamic>;
+        final fridgeId = json['id'] as int;
+        return _FridgeTabData(
+          id: fridgeId,
+          name: json['name'] as String,
+          items: items.where((item) => item.fridgeId == fridgeId).toList(),
+        );
+      }).toList();
+
+      if (!mounted) return;
+      setState(() {
+        _fridges = fridges.isEmpty ? _fridges : fridges.take(2).toList();
+        if (_fridgeTab >= _fridges.length) {
+          _fridgeTab = 0;
+        }
+        _isLoading = false;
+      });
+    } on DioException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = error.message ?? 'Failed to load fridge';
+        _isLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = 'Failed to load fridge';
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _removeItem(int id) async {
+    final fridgeId = _currentFridgeId;
+    if (fridgeId == null) return;
+    setState(() {
+      _fridges = _fridges.map((fridge) {
+        if (fridge.id != fridgeId) return fridge;
+        return fridge.copyWith(
+          items: fridge.items.where((item) => item.id != id).toList(),
+        );
+      }).toList();
+    });
+    try {
+      await _dio.delete<void>('/fridge/$_sampleUserId/$id');
+    } on DioException {
+      if (!mounted) return;
+      _loadFridge();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to delete ingredient')),
+      );
+    }
+  }
+
+  Future<void> _updateItem(FridgeItem updated) async {
+    final fridgeId = _currentFridgeId;
+    if (fridgeId == null) return;
+    final previous = _fridges;
+    setState(() {
+      _fridges = _fridges.map((fridge) {
+        if (fridge.id != fridgeId) return fridge;
+        final index = fridge.items.indexWhere((item) => item.id == updated.id);
+        if (index == -1) return fridge;
+        final items = List<FridgeItem>.from(fridge.items);
+        items[index] = updated;
+        return fridge.copyWith(items: items);
+      }).toList();
+    });
+
+    try {
+      final response = await _dio.patch<Map<String, dynamic>>(
+        '/fridge/$_sampleUserId/${updated.id}',
+        data: updated.toUpdateJson(),
+      );
+      final saved = FridgeItem.fromJson(response.data ?? <String, dynamic>{});
+      if (!mounted) return;
+      setState(() {
+        _fridges = _fridges.map((fridge) {
+          if (fridge.id != fridgeId) return fridge;
+          final index = fridge.items.indexWhere((item) => item.id == saved.id);
+          if (index == -1) return fridge;
+          final items = List<FridgeItem>.from(fridge.items);
+          items[index] = saved;
+          return fridge.copyWith(items: items);
+        }).toList();
+      });
+    } on DioException {
+      if (!mounted) return;
+      setState(() => _fridges = previous);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to update ingredient')),
+      );
+    }
   }
 
   void _openDetail(FridgeItem item) {
@@ -80,23 +199,34 @@ class _FridgeScreenState extends State<FridgeScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => AddIngredientSheet(
-        onAdd: (name, category, quantity) {
-          setState(() {
-            final newItem = FridgeItem(
-              id: DateTime.now().millisecondsSinceEpoch,
-              name: name,
-              category: category,
-              quantity: quantity.isEmpty ? null : quantity,
-            );
-            if (_fridgeTab == 0) {
-              _mainItems.add(newItem);
-            } else {
-              _kimchiItems.add(newItem);
-            }
-          });
-        },
+        onAdd: _addItem,
       ),
     );
+  }
+
+  Future<void> _addItem(String name, String category, String quantity) async {
+    final fridgeId = _currentFridgeId;
+    if (fridgeId == null) return;
+    try {
+      await _dio.post<Map<String, dynamic>>(
+        '/fridge/$_sampleUserId/manual',
+        data: {
+          'name': name,
+          'category': category,
+          'quantity': quantity.isEmpty ? null : quantity,
+          'fridge_id': fridgeId,
+        },
+      );
+      await _loadFridge();
+    } on DioException catch (error) {
+      if (!mounted) return;
+      final message = error.response?.statusCode == 409
+          ? 'Ingredient already exists in this fridge'
+          : 'Failed to add ingredient';
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+    }
   }
 
   @override
@@ -135,6 +265,7 @@ class _FridgeScreenState extends State<FridgeScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: _FridgeTabSwitch(
+              labels: _fridges.map((fridge) => fridge.name).take(2).toList(),
               selected: _fridgeTab,
               onSelect: (i) => setState(() {
                 _fridgeTab = i;
@@ -178,28 +309,7 @@ class _FridgeScreenState extends State<FridgeScreen> {
           const SizedBox(height: 8),
           // 재료 그리드
           Expanded(
-            child: _filtered.isEmpty
-                ? const _EmptyState()
-                : GridView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                      childAspectRatio: 0.9,
-                    ),
-                    itemCount: _filtered.length,
-                    itemBuilder: (context, index) {
-                      final item = _filtered[index];
-                      return _IngredientCard(
-                        item: item,
-                        isEditing: _isEditing,
-                        onRemove: () => _removeItem(item.id),
-                        onTap: () => _openDetail(item),
-                        onLongPress: _enterEditMode,
-                      );
-                    },
-                  ),
+            child: _buildBody(),
           ),
         ],
       ),
@@ -212,16 +322,63 @@ class _FridgeScreenState extends State<FridgeScreen> {
       ),
     );
   }
+
+  Widget _buildBody() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator(color: AppTheme.primary));
+    }
+    if (_errorMessage != null) {
+      return _ErrorState(
+        message: _errorMessage!,
+        onRetry: _loadFridge,
+      );
+    }
+    if (_filtered.isEmpty) {
+      return const _EmptyState();
+    }
+    return RefreshIndicator(
+      color: AppTheme.primary,
+      onRefresh: _loadFridge,
+      child: GridView.builder(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      childAspectRatio: 0.9,
+                    ),
+                    itemCount: _filtered.length,
+                    itemBuilder: (context, index) {
+                        final item = _filtered[index];
+                        return _IngredientCard(
+                          item: item,
+                          isEditing: _isEditing,
+                          onRemove: () => _removeItem(item.id),
+                          onTap: () => _openDetail(item),
+                          onLongPress: _enterEditMode,
+                        );
+                      },
+                  ),
+    );
+  }
 }
 
 class _FridgeTabSwitch extends StatelessWidget {
+  final List<String> labels;
   final int selected;
   final ValueChanged<int> onSelect;
 
-  const _FridgeTabSwitch({required this.selected, required this.onSelect});
+  const _FridgeTabSwitch({
+    required this.labels,
+    required this.selected,
+    required this.onSelect,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final effectiveLabels = labels.length >= 2
+        ? labels
+        : const ['Main Fridge', 'Kimchi Fridge'];
     return Container(
       height: 44,
       decoration: BoxDecoration(
@@ -230,10 +387,34 @@ class _FridgeTabSwitch extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _Tab(label: 'Main Fridge', isSelected: selected == 0, onTap: () => onSelect(0)),
-          _Tab(label: 'Kimchi Fridge', isSelected: selected == 1, onTap: () => onSelect(1)),
+          _Tab(label: effectiveLabels[0], isSelected: selected == 0, onTap: () => onSelect(0)),
+          _Tab(label: effectiveLabels[1], isSelected: selected == 1, onTap: () => onSelect(1)),
         ],
       ),
+    );
+  }
+}
+
+class _FridgeTabData {
+  final int id;
+  final String name;
+  final List<FridgeItem> items;
+
+  const _FridgeTabData({
+    required this.id,
+    required this.name,
+    required this.items,
+  });
+
+  _FridgeTabData copyWith({
+    int? id,
+    String? name,
+    List<FridgeItem>? items,
+  }) {
+    return _FridgeTabData(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      items: items ?? this.items,
     );
   }
 }
@@ -517,6 +698,48 @@ class _EmptyState extends StatelessWidget {
             style: TextStyle(fontSize: 13, color: Color(0xFF888888)),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ErrorState extends StatelessWidget {
+  final String message;
+  final Future<void> Function() onRetry;
+
+  const _ErrorState({required this.message, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('⚠️', style: TextStyle(fontSize: 42)),
+            const SizedBox(height: 12),
+            const Text(
+              'Could not load fridge',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1A1A1A),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 13, color: Color(0xFF888888)),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: onRetry,
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
       ),
     );
   }

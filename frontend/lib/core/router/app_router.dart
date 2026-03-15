@@ -30,10 +30,6 @@ final appRouter = GoRouter(
       path: '/saved-recipies',
       redirect: (context, state) => '/saved-recipes',
     ),
-    GoRoute(
-      path: '/saved-recipes',
-      builder: (context, state) => const recipes_saved.SavedRecipesScreen(),
-    ),
     ShellRoute(
       builder: (context, state, child) => MainShell(child: child),
       routes: [
@@ -53,6 +49,10 @@ final appRouter = GoRouter(
               ),
             ),
           ],
+        ),
+        GoRoute(
+          path: '/saved-recipes',
+          builder: (context, state) => const recipes_saved.SavedRecipesScreen(),
         ),
         GoRoute(
           path: '/profile',
