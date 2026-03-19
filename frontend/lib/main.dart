@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'core/router/app_router.dart';
-import 'core/theme/app_theme.dart';
 
 void main() {
   runApp(const ProviderScope(child: BabsimApp()));
@@ -15,7 +15,10 @@ class BabsimApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp.router(
       title: 'BABSIM',
-      theme: AppTheme.light,
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        textTheme: GoogleFonts.poppinsTextTheme(Theme.of(context).textTheme),
+      ),
       routerConfig: appRouter,
       debugShowCheckedModeBanner: false,
     );

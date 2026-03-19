@@ -1,35 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../data/recipe.dart';
+
 class RecipeDetailScreen extends StatelessWidget {
   final int recipeId;
 
   const RecipeDetailScreen({super.key, required this.recipeId});
 
-  static const _ingredients = [
-    '250g pasta (fettuccine or penne)',
-    '200ml heavy cream',
-    '50g parmesan cheese, grated',
-    '2 cloves garlic, minced',
-    '2 tbsp butter',
-    'Salt and black pepper to taste',
-    'Fresh parsley for garnish',
-    'Pinch of nutmeg (optional)',
-  ];
+  Recipe _findRecipe() {
+    for (final recipe in dummyRecipes) {
+      if (recipe.id == recipeId) {
+        return recipe;
+      }
+    }
+    return dummyRecipes.first;
+  }
 
-  static const _instructions = [
-    'Cook pasta according to package directions in salted boiling water. Reserve 1 cup of pasta water before draining.',
-    'While pasta cooks, melt butter in a large pan over medium heat.',
-    'Add minced garlic and saute until fragrant, about 1 minute.',
-    'Pour in heavy cream and bring to a gentle simmer.',
-    'Add grated parmesan cheese and stir until melted and smooth.',
-    'Add drained pasta to the sauce and toss to coat. Add pasta water if needed to adjust consistency.',
-    'Season with salt, pepper, and nutmeg if using.',
-    'Garnish with fresh parsley and serve immediately.',
-  ];
+  String _toHighResImage(String imageUrl) {
+    return imageUrl
+        .replaceFirst('w=400', 'w=1200')
+        .replaceFirst('h=300', 'h=900');
+  }
 
   @override
   Widget build(BuildContext context) {
+    final recipe = _findRecipe();
+    final info = _detailByRecipeId[recipe.id] ?? _fallbackDetail;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF4F4F3),
       body: CustomScrollView(
@@ -40,10 +38,37 @@ class RecipeDetailScreen extends StatelessWidget {
                 SizedBox(
                   height: 286,
                   width: double.infinity,
-                  child: Image.asset(
-                    'assets/images/creamy_garlic_pasta.png',
+                  child: Image.network(
+                    _toHighResImage(recipe.imageUrl),
                     fit: BoxFit.cover,
                     alignment: const Alignment(0.0, -0.08),
+                    loadingBuilder: (context, child, progress) {
+                      if (progress == null) {
+                        return child;
+                      }
+                      return Container(
+                        color: const Color(0xFF2A2B31),
+                        alignment: Alignment.center,
+                        child: const CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Color(0xFFF0914E),
+                        ),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        color: const Color(0xFF2A2B31),
+                        alignment: Alignment.center,
+                        child: Text(
+                          recipe.name,
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
                 Positioned(
@@ -85,9 +110,9 @@ class RecipeDetailScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'ITALIAN',
-                      style: TextStyle(
+                    Text(
+                      recipe.category.toUpperCase(),
+                      style: const TextStyle(
                         color: Color(0xFFF0914E),
                         fontSize: 12,
                         fontWeight: FontWeight.w800,
@@ -95,9 +120,9 @@ class RecipeDetailScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    const Text(
-                      'Creamy Pasta',
-                      style: TextStyle(
+                    Text(
+                      recipe.name,
+                      style: const TextStyle(
                         color: Color(0xFF16213D),
                         fontSize: 28,
                         fontWeight: FontWeight.w800,
@@ -105,9 +130,9 @@ class RecipeDetailScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    const Text(
-                      'A quick and delicious creamy pasta dish\nthat comes together in just 15 minutes.',
-                      style: TextStyle(
+                    Text(
+                      info.description,
+                      style: const TextStyle(
                         color: Color(0xFF6D798F),
                         fontSize: 15,
                         height: 1.5,
@@ -117,22 +142,22 @@ class RecipeDetailScreen extends StatelessWidget {
                     const SizedBox(height: 18),
                     const Divider(color: Color(0xFFE5E7EA), height: 1),
                     const SizedBox(height: 16),
-                    const Row(
+                    Row(
                       children: [
                         _MetaItem(
                           icon: Icons.access_time_rounded,
-                          label: '15m',
+                          label: '${recipe.cookTimeMinutes}m',
                         ),
-                        SizedBox(width: 18),
+                        const SizedBox(width: 18),
                         _MetaItem(
                           icon: Icons.star_rounded,
-                          label: '4.5',
-                          iconColor: Color(0xFFF5B300),
+                          label: recipe.rating.toStringAsFixed(1),
+                          iconColor: const Color(0xFFF5B300),
                         ),
-                        SizedBox(width: 18),
+                        const SizedBox(width: 18),
                         _MetaItem(
                           icon: Icons.people_outline_rounded,
-                          label: '2 servings',
+                          label: info.servings,
                         ),
                       ],
                     ),
@@ -141,19 +166,21 @@ class RecipeDetailScreen extends StatelessWidget {
                     const SizedBox(height: 22),
                     const _SectionTitle(title: 'Ingredients'),
                     const SizedBox(height: 14),
-                    _IngredientsCard(items: _ingredients),
+                    _IngredientsCard(items: info.ingredients),
                     const SizedBox(height: 24),
                     const _SectionTitle(title: 'Instructions'),
                     const SizedBox(height: 14),
                     ...List.generate(
-                      _instructions.length,
+                      info.instructions.length,
                       (index) => Padding(
                         padding: EdgeInsets.only(
-                          bottom: index == _instructions.length - 1 ? 0 : 16,
+                          bottom: index == info.instructions.length - 1
+                              ? 0
+                              : 16,
                         ),
                         child: _InstructionCard(
                           index: index + 1,
-                          text: _instructions[index],
+                          text: info.instructions[index],
                         ),
                       ),
                     ),
@@ -367,3 +394,109 @@ class _InstructionCard extends StatelessWidget {
     );
   }
 }
+
+class _RecipeDetailInfo {
+  final String description;
+  final String servings;
+  final List<String> ingredients;
+  final List<String> instructions;
+
+  const _RecipeDetailInfo({
+    required this.description,
+    required this.servings,
+    required this.ingredients,
+    required this.instructions,
+  });
+}
+
+const _fallbackDetail = _RecipeDetailInfo(
+  description: 'A balanced and tasty meal that is easy to make at home.',
+  servings: '2 servings',
+  ingredients: [
+    'Main ingredients from your pantry',
+    '2 tbsp olive oil',
+    'Salt and black pepper to taste',
+  ],
+  instructions: [
+    'Prepare all ingredients and preheat your pan.',
+    'Cook over medium heat until tender and flavorful.',
+    'Season to taste and serve immediately.',
+  ],
+);
+
+const Map<int, _RecipeDetailInfo> _detailByRecipeId = {
+  2: _RecipeDetailInfo(
+    description:
+        'A quick and delicious creamy pasta dish that comes together in about 15 minutes.',
+    servings: '2 servings',
+    ingredients: [
+      '250g pasta (fettuccine or penne)',
+      '200ml heavy cream',
+      '50g parmesan cheese, grated',
+      '2 cloves garlic, minced',
+      '2 tbsp butter',
+      'Salt and black pepper to taste',
+    ],
+    instructions: [
+      'Cook pasta in salted boiling water. Reserve a little pasta water.',
+      'Melt butter and saute garlic until fragrant.',
+      'Add cream and parmesan, then stir until smooth.',
+      'Toss in pasta and adjust consistency with pasta water.',
+      'Season and serve warm.',
+    ],
+  ),
+  3: _RecipeDetailInfo(
+    description:
+        'A light avocado toast recipe perfect for brunch or a quick breakfast.',
+    servings: '1 serving',
+    ingredients: [
+      '1 ripe avocado',
+      '2 slices sourdough bread',
+      '1 egg (optional)',
+      'Lemon juice',
+      'Salt and chili flakes',
+    ],
+    instructions: [
+      'Toast bread slices until golden.',
+      'Mash avocado with lemon juice and a pinch of salt.',
+      'Spread avocado on toast and top with egg if desired.',
+      'Finish with chili flakes and serve.',
+    ],
+  ),
+  4: _RecipeDetailInfo(
+    description:
+        'A crisp fresh salad that works great as a side or a healthy lunch.',
+    servings: '2 servings',
+    ingredients: [
+      'Lettuce mix',
+      'Cherry tomatoes',
+      'Cucumber',
+      'Olive oil and lemon dressing',
+      'Salt and pepper',
+    ],
+    instructions: [
+      'Wash and dry all vegetables.',
+      'Slice tomatoes and cucumber.',
+      'Mix vegetables in a large bowl.',
+      'Toss with dressing and season to taste.',
+    ],
+  ),
+  6: _RecipeDetailInfo(
+    description: 'Comforting miso ramen packed with umami broth and noodles.',
+    servings: '2 servings',
+    ingredients: [
+      '2 packs ramen noodles',
+      '2 tbsp miso paste',
+      '4 cups broth',
+      'Soy sauce and sesame oil',
+      'Scallions and boiled egg topping',
+    ],
+    instructions: [
+      'Bring broth to a simmer and dissolve miso paste.',
+      'Season with soy sauce and sesame oil.',
+      'Cook noodles separately and drain.',
+      'Combine noodles with broth and add toppings.',
+      'Serve hot.',
+    ],
+  ),
+};

@@ -1,5 +1,6 @@
 import 'package:go_router/go_router.dart';
 
+import '../../features/auth/presentation/loading_screen.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
 import '../../features/fridge/presentation/fridge_screen.dart';
@@ -22,9 +23,13 @@ import '../../features/profile/presentation/settings_screen.dart';
 import '../shell/main_shell.dart';
 
 final appRouter = GoRouter(
-  initialLocation: '/login',
+  initialLocation: '/loading',
   routes: [
-    GoRoute(path: '/', redirect: (context, state) => '/login'),
+    GoRoute(path: '/', redirect: (context, state) => '/loading'),
+    GoRoute(
+      path: '/loading',
+      builder: (context, state) => const LoadingScreen(),
+    ),
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
     GoRoute(
       path: '/saved-recipies',

@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../recipes/data/recipe.dart';
 import '../../recipes/data/saved_recipes_store.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -9,39 +13,46 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ColoredBox(
-      color: Color(0xFFF3F3F1),
-      child: SafeArea(
-        bottom: false,
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const _TopHeroSection(),
-              const SizedBox(height: 28),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 22),
-                child: _SectionHeader(
-                  title: 'Expiring Soon',
-                  actionText: 'View All',
-                  showAccentDot: true,
-                  onActionTap: () => context.go('/fridge'),
+    return Theme(
+      data: Theme.of(context).copyWith(
+        textTheme: GoogleFonts.plusJakartaSansTextTheme(
+          Theme.of(context).textTheme,
+        ),
+      ),
+      child: ColoredBox(
+        color: const Color(0xFFF2F3F5),
+        child: SafeArea(
+          bottom: false,
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const _TopHeroSection(),
+                const SizedBox(height: 30),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: _SectionHeader(
+                    title: 'Expiring Soon',
+                    actionText: 'View All',
+                    showAccentDot: true,
+                    onActionTap: () => context.go('/fridge'),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 18),
-              const _ExpiringSoonList(),
-              const SizedBox(height: 36),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 22),
-                child: const _SectionHeader(title: 'For Your Dinner'),
-              ),
-              const SizedBox(height: 18),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 22),
-                child: const _FeaturedRecipeCard(),
-              ),
-              const SizedBox(height: 72),
-            ],
+                const SizedBox(height: 14),
+                const _ExpiringSoonList(),
+                const SizedBox(height: 34),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  child: _SectionHeader(title: 'For Your Dinner'),
+                ),
+                const SizedBox(height: 16),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  child: _FeaturedRecipeCard(),
+                ),
+                const SizedBox(height: 72),
+              ],
+            ),
           ),
         ),
       ),
@@ -57,16 +68,16 @@ class _TopHeroSection extends StatelessWidget {
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
-        color: Color(0xFFE8C295),
+        color: Color(0xFFEBC79D),
         borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(36),
-          bottomRight: Radius.circular(36),
+          bottomLeft: Radius.circular(30),
+          bottomRight: Radius.circular(30),
         ),
       ),
-      padding: const EdgeInsets.fromLTRB(22, 30, 22, 32),
-      child: Column(
+      padding: const EdgeInsets.fromLTRB(16, 26, 16, 30),
+      child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [_Header(), SizedBox(height: 30), _SavedRecipesCard()],
+        children: [_Header(), SizedBox(height: 26), _SavedRecipesCard()],
       ),
     );
   }
@@ -81,21 +92,21 @@ class _Header extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'GOOD EVENING',
+          'GOOD AFTERNOON',
           style: TextStyle(
             fontSize: 12,
             letterSpacing: 0.8,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF4E5563),
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF121D3C),
           ),
         ),
-        SizedBox(height: 8),
+        SizedBox(height: 6),
         Text(
           'Alex User',
           style: TextStyle(
             fontSize: 31,
             height: 1,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w700,
             color: Color(0xFF101B3B),
           ),
         ),
@@ -109,100 +120,95 @@ class _SavedRecipesCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFFF4F2F1),
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x18000000),
-            blurRadius: 16,
-            offset: Offset(0, 8),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: () => context.push('/saved-recipes'),
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFFF5F6F8),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x140A1530),
+                blurRadius: 12,
+                offset: Offset(0, 4),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            right: 0,
-            top: 0,
-            bottom: 0,
-            child: Container(
-              width: 82,
-              decoration: const BoxDecoration(
-                color: Color(0xFFECE9E8),
-                borderRadius: BorderRadius.only(
-                  topRight: Radius.circular(22),
-                  bottomRight: Radius.circular(22),
+          child: Stack(
+            children: [
+              Positioned(
+                right: 0,
+                top: 0,
+                bottom: 0,
+                child: Container(
+                  width: 70,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFF1F2F5),
+                    borderRadius: BorderRadius.only(
+                      topRight: Radius.circular(20),
+                      bottomRight: Radius.circular(20),
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 18, 20),
-            child: Row(
-              children: [
-                Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF0EBE9),
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  child: const Icon(
-                    Icons.bookmark_outline_rounded,
-                    color: AppTheme.primary,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Saved Recipes',
-                        style: TextStyle(
-                          color: Color(0xFF18213D),
-                          fontSize: 17,
-                          fontWeight: FontWeight.w800,
-                        ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 14, 16),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 46,
+                      height: 46,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEEF0F3),
+                        borderRadius: BorderRadius.circular(14),
                       ),
-                      SizedBox(height: 4),
-                      Text(
-                        'See your collection',
-                        style: TextStyle(
-                          color: Color(0xFF7C889E),
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                        ),
+                      child: const Icon(
+                        Icons.bookmark_outline_rounded,
+                        color: AppTheme.primary,
+                        size: 24,
                       ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 16),
-                GestureDetector(
-                  onTap: () => context.push('/saved-recipes'),
-                  behavior: HitTestBehavior.opaque,
-                  child: Container(
-                    width: 44,
-                    height: 44,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFF39554),
-                      shape: BoxShape.circle,
                     ),
-                    child: const Icon(
-                      Icons.arrow_forward_rounded,
-                      color: Colors.white,
-                      size: 22,
+                    const SizedBox(width: 16),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Saved Recipes',
+                            style: TextStyle(
+                              color: Color(0xFF18213D),
+                              fontSize: 17,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'See your collection',
+                            style: TextStyle(
+                              color: Color(0xFF7C889E),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 16),
+                    const Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      color: Color(0xFFF39A57),
+                      size: 20,
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -257,7 +263,7 @@ class _SectionHeader extends StatelessWidget {
               actionText!,
               style: const TextStyle(
                 fontSize: 14,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w600,
                 color: Color(0xFFF18B45),
               ),
             ),
@@ -281,32 +287,32 @@ class _ExpiringSoonList extends StatelessWidget {
       ),
       _ExpiringItem(
         name: 'Spinach',
-        daysLeftLabel: '2 days',
+        daysLeftLabel: '2d',
         fridgeLabel: 'FRIDGE A',
         illustration: _SpinachIllustration(),
       ),
       _ExpiringItem(
         name: 'Eggs',
-        daysLeftLabel: '3 days',
+        daysLeftLabel: '3d',
         fridgeLabel: 'FRIDGE A',
         illustration: _EggIllustration(),
       ),
       _ExpiringItem(
         name: 'Butter',
-        daysLeftLabel: '4 days',
+        daysLeftLabel: '4d',
         fridgeLabel: 'FRIDGE B',
         illustration: _ButterIllustration(),
       ),
     ];
 
     return SizedBox(
-      height: 155,
+      height: 142,
       child: ListView.separated(
-        padding: const EdgeInsets.symmetric(horizontal: 22),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         physics: const BouncingScrollPhysics(),
         scrollDirection: Axis.horizontal,
         itemCount: items.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 14),
+        separatorBuilder: (_, _) => const SizedBox(width: 10),
         itemBuilder: (context, index) => items[index],
       ),
     );
@@ -329,16 +335,16 @@ class _ExpiringItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 128,
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+      width: 98,
+      padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFEFEFEF),
-        borderRadius: BorderRadius.circular(18),
+        color: const Color(0xFFECEFF3),
+        borderRadius: BorderRadius.circular(14),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x09000000),
-            blurRadius: 10,
-            offset: Offset(0, 5),
+            color: Color(0x120D1630),
+            blurRadius: 8,
+            offset: Offset(0, 3),
           ),
         ],
       ),
@@ -348,7 +354,7 @@ class _ExpiringItem extends StatelessWidget {
           Align(
             alignment: Alignment.topRight,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
                 color: const Color(0xFFF09A58),
                 borderRadius: BorderRadius.circular(999),
@@ -356,7 +362,7 @@ class _ExpiringItem extends StatelessWidget {
               child: Text(
                 daysLeftLabel,
                 style: const TextStyle(
-                  fontSize: 11,
+                  fontSize: 10,
                   fontWeight: FontWeight.w700,
                   color: Colors.white,
                 ),
@@ -373,7 +379,7 @@ class _ExpiringItem extends StatelessWidget {
             name,
             style: const TextStyle(
               fontSize: 16,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w800,
               color: Color(0xFF18203A),
             ),
           ),
@@ -381,7 +387,7 @@ class _ExpiringItem extends StatelessWidget {
           Text(
             fridgeLabel,
             style: const TextStyle(
-              fontSize: 11,
+              fontSize: 10,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.3,
               color: Color(0xFFA3AEC2),
@@ -393,184 +399,362 @@ class _ExpiringItem extends StatelessWidget {
   }
 }
 
-class _FeaturedRecipeCard extends StatelessWidget {
+class _FeaturedRecipeCard extends StatefulWidget {
   const _FeaturedRecipeCard();
 
-  static const int _featuredRecipeId = 2;
+  @override
+  State<_FeaturedRecipeCard> createState() => _FeaturedRecipeCardState();
+}
+
+class _FeaturedRecipeCardState extends State<_FeaturedRecipeCard> {
+  static const _autoSlideInterval = Duration(seconds: 4);
+  static const List<_FeaturedRecipeEntry> _entries = [
+    _FeaturedRecipeEntry(
+      recipeId: 2,
+      matchLabel: '95% Match',
+      usesLabel: 'Uses: Milk, Garlic, Butter',
+    ),
+    _FeaturedRecipeEntry(
+      recipeId: 3,
+      matchLabel: '93% Match',
+      usesLabel: 'Uses: Avocado, Bread, Egg',
+    ),
+    _FeaturedRecipeEntry(
+      recipeId: 4,
+      matchLabel: '90% Match',
+      usesLabel: 'Uses: Lettuce, Tomato, Cucumber',
+    ),
+    _FeaturedRecipeEntry(
+      recipeId: 6,
+      matchLabel: '91% Match',
+      usesLabel: 'Uses: Noodles, Broth, Miso',
+    ),
+  ];
+
+  final PageController _pageController = PageController();
+  Timer? _autoSlideTimer;
+  int _currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _startAutoSlide();
+  }
+
+  @override
+  void dispose() {
+    _autoSlideTimer?.cancel();
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _startAutoSlide() {
+    _autoSlideTimer?.cancel();
+    _autoSlideTimer = Timer.periodic(_autoSlideInterval, (_) {
+      if (!mounted || !_pageController.hasClients) {
+        return;
+      }
+      final nextIndex = (_currentIndex + 1) % _entries.length;
+      _pageController.animateToPage(
+        nextIndex,
+        duration: const Duration(milliseconds: 420),
+        curve: Curves.easeOutCubic,
+      );
+    });
+  }
+
+  void _goToIndex(int index) {
+    if (!_pageController.hasClients) {
+      return;
+    }
+    _pageController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 340),
+      curve: Curves.easeOutCubic,
+    );
+    _startAutoSlide();
+  }
+
+  Recipe _findRecipe(int recipeId) {
+    for (final recipe in dummyRecipes) {
+      if (recipe.id == recipeId) {
+        return recipe;
+      }
+    }
+    return dummyRecipes.first;
+  }
 
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(30),
-      child: Stack(
-        children: [
-          SizedBox(
-            height: 240,
-            width: double.infinity,
-            child: Image.asset(
-              'assets/images/creamy_garlic_pasta.png',
-              fit: BoxFit.cover,
-              alignment: const Alignment(0.0, -0.08),
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  color: const Color(0xFF2B2A31),
-                  child: const Center(
-                    child: Icon(
-                      Icons.restaurant_rounded,
-                      color: Colors.white54,
-                      size: 48,
-                    ),
-                  ),
-                );
+      child: SizedBox(
+        height: 300,
+        child: Stack(
+          children: [
+            PageView.builder(
+              controller: _pageController,
+              itemCount: _entries.length,
+              onPageChanged: (index) {
+                setState(() {
+                  _currentIndex = index;
+                });
+              },
+              itemBuilder: (context, index) {
+                final entry = _entries[index];
+                final recipe = _findRecipe(entry.recipeId);
+                return _FeaturedRecipeSlide(recipe: recipe, entry: entry);
               },
             ),
+            Positioned(
+              top: 20,
+              right: 16,
+              child: Column(
+                children: List.generate(_entries.length, (index) {
+                  final isActive = _currentIndex == index;
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 3),
+                    child: GestureDetector(
+                      onTap: () => _goToIndex(index),
+                      behavior: HitTestBehavior.opaque,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 220),
+                        width: isActive ? 12 : 8,
+                        height: isActive ? 12 : 8,
+                        decoration: BoxDecoration(
+                          color: isActive
+                              ? const Color(0xFFF39A57)
+                              : Colors.white.withValues(alpha: 0.78),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FeaturedRecipeSlide extends StatelessWidget {
+  const _FeaturedRecipeSlide({required this.recipe, required this.entry});
+
+  final Recipe recipe;
+  final _FeaturedRecipeEntry entry;
+
+  String _toHighResImage(String imageUrl) {
+    return imageUrl
+        .replaceFirst('w=400', 'w=1200')
+        .replaceFirst('h=300', 'h=900');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: Image.network(
+            _toHighResImage(recipe.imageUrl),
+            fit: BoxFit.cover,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) {
+                return child;
+              }
+              return Container(
+                color: const Color(0xFF2B2A31),
+                alignment: Alignment.center,
+                child: const CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Color(0xFFF39A57),
+                ),
+              );
+            },
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                color: const Color(0xFF2B2A31),
+                alignment: Alignment.center,
+                child: Text(
+                  recipe.name,
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              );
+            },
           ),
-          Container(
-            height: 240,
+        ),
+        Positioned.fill(
+          child: Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Colors.black.withOpacity(0.18),
-                  Colors.black.withOpacity(0.28),
-                  Colors.black.withOpacity(0.78),
+                  Colors.black.withValues(alpha: 0.14),
+                  Colors.black.withValues(alpha: 0.26),
+                  Colors.black.withValues(alpha: 0.8),
                 ],
                 stops: const [0.0, 0.45, 1.0],
               ),
             ),
           ),
-          Positioned(
-            top: 20,
-            left: 16,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-              decoration: BoxDecoration(
-                color: const Color(0xFF8EE5C5),
-                borderRadius: BorderRadius.circular(999),
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.auto_awesome, size: 14, color: Color(0xFFFFD65C)),
-                  SizedBox(width: 6),
-                  Text(
-                    '95% Match',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
+        ),
+        Positioned(
+          top: 20,
+          left: 16,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+            decoration: BoxDecoration(
+              color: const Color(0xFF8EE5C5),
+              borderRadius: BorderRadius.circular(999),
             ),
-          ),
-          Positioned(
-            left: 20,
-            right: 20,
-            bottom: 20,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 230),
-                  child: const Text(
-                    'Creamy Garlic Pasta',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      height: 1.1,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
+                const Icon(
+                  Icons.auto_awesome,
+                  size: 14,
+                  color: Color(0xFFFFD65C),
                 ),
-                const SizedBox(height: 14),
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 235),
-                  child: const Row(
-                    children: [
-                      Icon(
-                        Icons.restaurant_menu_rounded,
-                        size: 15,
-                        color: Colors.white70,
-                      ),
-                      SizedBox(width: 7),
-                      Text(
-                        'Uses: Milk, Garlic, Butter',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
+                const SizedBox(width: 6),
+                Text(
+                  entry.matchLabel,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
                   ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: SizedBox(
-                        height: 54,
-                        child: ElevatedButton(
-                          onPressed: () => context.push('/recipes/1'),
-                          style: ElevatedButton.styleFrom(
-                            elevation: 0,
-                            backgroundColor: const Color(0xFFF39855),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                          child: const Text(
-                            'Start Cooking',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    ValueListenableBuilder<Set<int>>(
-                      valueListenable: SavedRecipesStore.savedRecipeIds,
-                      builder: (context, savedRecipeIds, child) {
-                        final isSaved = savedRecipeIds.contains(
-                          _featuredRecipeId,
-                        );
-                        return GestureDetector(
-                          onTap: () =>
-                              SavedRecipesStore.toggleSaved(_featuredRecipeId),
-                          behavior: HitTestBehavior.opaque,
-                          child: Container(
-                            width: 54,
-                            height: 54,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF58473B).withOpacity(0.7),
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                            child: Icon(
-                              isSaved
-                                  ? Icons.favorite_rounded
-                                  : Icons.favorite_border_rounded,
-                              color: isSaved
-                                  ? const Color(0xFFF39A57)
-                                  : Colors.white,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ],
                 ),
               ],
             ),
           ),
-        ],
-      ),
+        ),
+        Positioned(
+          left: 20,
+          right: 20,
+          bottom: 20,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 240),
+                child: Text(
+                  recipe.name,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    height: 1.1,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 245),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.restaurant_menu_rounded,
+                      size: 15,
+                      color: Colors.white70,
+                    ),
+                    const SizedBox(width: 7),
+                    Expanded(
+                      child: Text(
+                        entry.usesLabel,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 54,
+                      child: ElevatedButton(
+                        onPressed: () => context.push('/recipes/${recipe.id}'),
+                        style: ElevatedButton.styleFrom(
+                          elevation: 0,
+                          backgroundColor: const Color(0xFFF39855),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                        ),
+                        child: const Text(
+                          'Start Cooking',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  ValueListenableBuilder<Set<int>>(
+                    valueListenable: SavedRecipesStore.savedRecipeIds,
+                    builder: (context, savedRecipeIds, child) {
+                      final isSaved = savedRecipeIds.contains(recipe.id);
+                      return GestureDetector(
+                        onTap: () => SavedRecipesStore.toggleSaved(recipe.id),
+                        behavior: HitTestBehavior.opaque,
+                        child: Container(
+                          width: 54,
+                          height: 54,
+                          decoration: BoxDecoration(
+                            color: const Color(
+                              0xFF58473B,
+                            ).withValues(alpha: 0.7),
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          child: Icon(
+                            isSaved
+                                ? Icons.favorite_rounded
+                                : Icons.favorite_border_rounded,
+                            color: isSaved
+                                ? const Color(0xFFF39A57)
+                                : Colors.white,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
+}
+
+class _FeaturedRecipeEntry {
+  const _FeaturedRecipeEntry({
+    required this.recipeId,
+    required this.matchLabel,
+    required this.usesLabel,
+  });
+
+  final int recipeId;
+  final String matchLabel;
+  final String usesLabel;
 }
 
 class _MilkIllustration extends StatelessWidget {

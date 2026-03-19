@@ -167,7 +167,7 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 scrollDirection: Axis.horizontal,
                 itemCount: recipeCategories.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                separatorBuilder: (_, _) => const SizedBox(width: 8),
                 itemBuilder: (_, index) {
                   final cat = recipeCategories[index];
                   final isSelected = cat == _selectedCategory;
@@ -301,7 +301,7 @@ class _RecipeCard extends StatelessWidget {
                       recipe.imageUrl,
                       width: double.infinity,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
+                      errorBuilder: (_, _, _) => Container(
                         color: const Color(0xFFF0F0F0),
                         child: const Center(
                           child: Icon(

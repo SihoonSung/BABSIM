@@ -194,7 +194,7 @@ class _SavedRecipesScreenState extends State<SavedRecipesScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     scrollDirection: Axis.horizontal,
                     itemCount: recipeCategories.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 8),
+                    separatorBuilder: (_, _) => const SizedBox(width: 8),
                     itemBuilder: (_, index) {
                       final category = recipeCategories[index];
                       final isSelected = category == _selectedCategory;
@@ -347,7 +347,7 @@ class _SavedRecipeCard extends StatelessWidget {
                       recipe.imageUrl,
                       width: double.infinity,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
+                      errorBuilder: (_, _, _) => Container(
                         color: const Color(0xFFF0F0F0),
                         child: const Center(
                           child: Icon(
