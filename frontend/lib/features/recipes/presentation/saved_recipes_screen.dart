@@ -53,14 +53,16 @@ class _SavedRecipesScreenState extends State<SavedRecipesScreen> {
           .where((recipe) => recipe.cookingTime == _filter.cookingTime)
           .toList();
     }
-    if (_filter.difficulty != null) {
-      recipes = recipes
-          .where((recipe) => recipe.difficulty == _filter.difficulty)
-          .toList();
-    }
+
+
     if (_filter.mealTypes.isNotEmpty) {
       recipes = recipes
           .where((recipe) => _filter.mealTypes.contains(recipe.mealType))
+          .toList();
+    }
+    if (_filter.dietaryTags.isNotEmpty) {
+      recipes = recipes
+          .where((recipe) => _filter.dietaryTags.every((tag) => recipe.dietaryTags.contains(tag)))
           .toList();
     }
 

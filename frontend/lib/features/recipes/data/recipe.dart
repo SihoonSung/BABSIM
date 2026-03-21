@@ -62,32 +62,40 @@ class Recipe {
   }
 }
 
+/// Dietary preference options
+const List<String> dietaryOptions = [
+  'Vegan',
+  'Vegetarian',
+  'Gluten-Free',
+  'Dairy-Free',
+];
+
 /// 필터 상태 모델
 class RecipeFilter {
   final CookingTime? cookingTime;
-  final Difficulty? difficulty;
   final Set<MealType> mealTypes;
+  final Set<String> dietaryTags;
 
   const RecipeFilter({
     this.cookingTime,
-    this.difficulty,
     this.mealTypes = const {},
+    this.dietaryTags = const {},
   });
 
   RecipeFilter copyWith({
     CookingTime? Function()? cookingTime,
-    Difficulty? Function()? difficulty,
     Set<MealType>? mealTypes,
+    Set<String>? dietaryTags,
   }) {
     return RecipeFilter(
       cookingTime: cookingTime != null ? cookingTime() : this.cookingTime,
-      difficulty: difficulty != null ? difficulty() : this.difficulty,
       mealTypes: mealTypes ?? this.mealTypes,
+      dietaryTags: dietaryTags ?? this.dietaryTags,
     );
   }
 
   bool get hasActiveFilters =>
-      cookingTime != null || difficulty != null || mealTypes.isNotEmpty;
+      cookingTime != null || mealTypes.isNotEmpty || dietaryTags.isNotEmpty;
 
   static const empty = RecipeFilter();
 }
@@ -114,7 +122,7 @@ const List<Recipe> dummyRecipes = [
     cookTimeMinutes: 15,
     difficulty: Difficulty.easy,
     mealType: MealType.dinner,
-    dietaryTags: [],
+    dietaryTags: ['Vegetarian', 'Dairy-Free'],
   ),
   Recipe(
     id: 3,
@@ -125,7 +133,7 @@ const List<Recipe> dummyRecipes = [
     cookTimeMinutes: 10,
     difficulty: Difficulty.easy,
     mealType: MealType.breakfast,
-    dietaryTags: ['Vegan'],
+    dietaryTags: ['Vegan', 'Vegetarian', 'Dairy-Free'],
   ),
   Recipe(
     id: 4,
@@ -136,7 +144,7 @@ const List<Recipe> dummyRecipes = [
     cookTimeMinutes: 10,
     difficulty: Difficulty.easy,
     mealType: MealType.lunch,
-    dietaryTags: ['Vegan', 'Gluten-Free'],
+    dietaryTags: ['Vegan', 'Vegetarian', 'Gluten-Free', 'Dairy-Free'],
   ),
   Recipe(
     id: 5,
@@ -147,7 +155,7 @@ const List<Recipe> dummyRecipes = [
     cookTimeMinutes: 25,
     difficulty: Difficulty.medium,
     mealType: MealType.lunch,
-    dietaryTags: [],
+    dietaryTags: ['Gluten-Free'],
   ),
   Recipe(
     id: 6,
@@ -180,7 +188,7 @@ const List<Recipe> dummyRecipes = [
     cookTimeMinutes: 45,
     difficulty: Difficulty.hard,
     mealType: MealType.dinner,
-    dietaryTags: [],
+    dietaryTags: ['Dairy-Free', 'Gluten-Free'],
   ),
   Recipe(
     id: 9,
@@ -191,7 +199,7 @@ const List<Recipe> dummyRecipes = [
     cookTimeMinutes: 12,
     difficulty: Difficulty.easy,
     mealType: MealType.breakfast,
-    dietaryTags: [],
+    dietaryTags: ['Vegetarian'],
   ),
   Recipe(
     id: 10,

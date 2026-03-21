@@ -41,14 +41,16 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
           .where((r) => r.cookingTime == _filter.cookingTime)
           .toList();
     }
-    if (_filter.difficulty != null) {
-      recipes = recipes
-          .where((r) => r.difficulty == _filter.difficulty)
-          .toList();
-    }
+
+
     if (_filter.mealTypes.isNotEmpty) {
       recipes = recipes
           .where((r) => _filter.mealTypes.contains(r.mealType))
+          .toList();
+    }
+    if (_filter.dietaryTags.isNotEmpty) {
+      recipes = recipes
+          .where((r) => _filter.dietaryTags.every((tag) => r.dietaryTags.contains(tag)))
           .toList();
     }
 

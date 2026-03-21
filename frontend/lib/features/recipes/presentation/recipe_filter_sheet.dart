@@ -27,30 +27,30 @@ class RecipeFilterSheet extends StatefulWidget {
 
 class _RecipeFilterSheetState extends State<RecipeFilterSheet> {
   late CookingTime? _cookingTime;
-  late Difficulty? _difficulty;
   late Set<MealType> _mealTypes;
+  late Set<String> _dietaryTags;
 
   @override
   void initState() {
     super.initState();
     _cookingTime = widget.initialFilter.cookingTime;
-    _difficulty = widget.initialFilter.difficulty;
     _mealTypes = Set.from(widget.initialFilter.mealTypes);
+    _dietaryTags = Set.from(widget.initialFilter.dietaryTags);
   }
 
   void _resetAll() {
     setState(() {
       _cookingTime = null;
-      _difficulty = null;
       _mealTypes = {};
+      _dietaryTags = {};
     });
   }
 
   void _applyFilters() {
     Navigator.of(context).pop(RecipeFilter(
       cookingTime: _cookingTime,
-      difficulty: _difficulty,
       mealTypes: _mealTypes,
+      dietaryTags: _dietaryTags,
     ));
   }
 
@@ -152,40 +152,6 @@ class _RecipeFilterSheetState extends State<RecipeFilterSheet> {
                       ],
                     ),
                     const SizedBox(height: 28),
-                    // Difficulty
-                    _SectionTitle(icon: '👨‍🍳', label: 'Difficulty'),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        _FilterCard(
-                          emoji: '👌',
-                          label: 'Easy',
-                          isSelected: _difficulty == Difficulty.easy,
-                          onTap: () => setState(() {
-                            _difficulty = _difficulty == Difficulty.easy ? null : Difficulty.easy;
-                          }),
-                        ),
-                        const SizedBox(width: 10),
-                        _FilterCard(
-                          emoji: '👍',
-                          label: 'Medium',
-                          isSelected: _difficulty == Difficulty.medium,
-                          onTap: () => setState(() {
-                            _difficulty = _difficulty == Difficulty.medium ? null : Difficulty.medium;
-                          }),
-                        ),
-                        const SizedBox(width: 10),
-                        _FilterCard(
-                          emoji: '🔥',
-                          label: 'Hard',
-                          isSelected: _difficulty == Difficulty.hard,
-                          onTap: () => setState(() {
-                            _difficulty = _difficulty == Difficulty.hard ? null : Difficulty.hard;
-                          }),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 28),
                     // Meal Type
                     _SectionTitle(icon: '🍽️', label: 'Meal Type'),
                     const SizedBox(height: 12),
@@ -240,9 +206,46 @@ class _RecipeFilterSheetState extends State<RecipeFilterSheet> {
                     // Dietary Preferences
                     _SectionTitle(icon: '🥗', label: 'Dietary Preferences'),
                     const SizedBox(height: 12),
-                    Text(
-                      'Coming soon...',
-                      style: TextStyle(fontSize: 14, color: Color(0xFF888888)),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: dietaryOptions.map((tag) {
+                        final isSelected = _dietaryTags.contains(tag);
+                        return GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              if (isSelected) {
+                                _dietaryTags.remove(tag);
+                              } else {
+                                _dietaryTags.add(tag);
+                              }
+                            });
+                          },
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 150),
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? AppTheme.primary.withValues(alpha: 0.1)
+                                  : const Color(0xFFF5F5F5),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: isSelected
+                                    ? AppTheme.primary.withValues(alpha: 0.3)
+                                    : const Color(0xFFE8E8E8),
+                              ),
+                            ),
+                            child: Text(
+                              tag,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                                color: isSelected ? AppTheme.primary : const Color(0xFF555555),
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
                     ),
                     const SizedBox(height: 32),
                   ],
