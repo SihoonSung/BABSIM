@@ -32,6 +32,7 @@ Seongbeen Na
 Sihoon Sung
 Minseo Kim
 Chiu Choi
+Seongbeen Na
 
 ````
 ├── frontend/         # Flutter 앱
