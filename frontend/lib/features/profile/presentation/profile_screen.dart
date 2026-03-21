@@ -27,24 +27,24 @@ class ProfileScreen extends StatelessWidget {
                     title: 'Allergies',
                     subtitle: 'Peanuts, Shellfish',
                     icon: Icons.warning_amber_rounded,
-                    iconBg: const Color(0xFFFFF4E8),
-                    iconColor: const Color(0xFFFF9800),
+                    iconBg: const Color(0xFFFFF2E4),
+                    iconColor: const Color(0xFFFC9946),
                     onTap: () => context.push('/profile/allergies'),
                   ),
                   _MenuItemData(
                     title: 'Disliked Ingredients',
                     subtitle: 'Eggplant, Cucumber',
                     icon: Icons.not_interested_rounded,
-                    iconBg: const Color(0xFFFFF1F1),
-                    iconColor: const Color(0xFFFF3B30),
+                    iconBg: const Color(0xFFFFF2E4),
+                    iconColor: const Color(0xFFFC9946),
                     onTap: () => context.push('/profile/disliked'),
                   ),
                   _MenuItemData(
                     title: 'Kitchen Tools',
                     subtitle: 'Air Fryer, Blender',
                     icon: Icons.blender_outlined,
-                    iconBg: const Color(0xFFEEF0FF),
-                    iconColor: const Color(0xFF5F6BFF),
+                    iconBg: const Color(0xFFFFF2E4),
+                    iconColor: const Color(0xFFFC9946),
                     onTap: () => context.push('/profile/tools'),
                   ),
                 ],
@@ -57,24 +57,24 @@ class ProfileScreen extends StatelessWidget {
                     title: 'Saved Recipes',
                     subtitle: '12 recipes',
                     icon: Icons.bookmark_border_rounded,
-                    iconBg: const Color(0xFFFFEDD8),
-                    iconColor: const Color(0xFFF59E4B),
-                    onTap: () => context.push('/profile/saved'),
+                    iconBg: const Color(0xFFEAF8F0),
+                    iconColor: const Color(0xFF31BE88),
+                    onTap: () => context.push('/saved-recipes'),
                   ),
                   _MenuItemData(
                     title: 'Cooked Recipes',
                     subtitle: '16 recipes',
                     icon: Icons.soup_kitchen_outlined,
-                    iconBg: const Color(0xFFE8F6F0),
-                    iconColor: const Color(0xFF5BBE9A),
+                    iconBg: const Color(0xFFEAF8F0),
+                    iconColor: const Color(0xFF31BE88),
                     onTap: () => context.push('/profile/cooked'),
                   ),
                   _MenuItemData(
                     title: 'My Fridges',
                     subtitle: 'Main, Kimchi, Wine Cooler',
                     icon: Icons.kitchen_outlined,
-                    iconBg: const Color(0xFFE9F8F1),
-                    iconColor: const Color(0xFF27B07D),
+                    iconBg: const Color(0xFFEAF8F0),
+                    iconColor: const Color(0xFF31BE88),
                     onTap: () => context.push('/profile/fridges'),
                   ),
                   _MenuItemData(
@@ -130,90 +130,72 @@ class _ProfileHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 270,
+      height: 320,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
           Container(
-            height: 210,
-            padding: const EdgeInsets.fromLTRB(22, 28, 22, 18),
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(22, 20, 22, 60),
             decoration: const BoxDecoration(
-              color: Color(0xFFF09154),
+              color: Color(0xFFFFD3A0),
               borderRadius: BorderRadius.vertical(bottom: Radius.circular(34)),
             ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Stack(
-                  children: [
-                    const CircleAvatar(
-                      radius: 34,
-                      backgroundColor: Color(0xFFFFD8BE),
-                      child: Icon(
-                        Icons.person,
-                        size: 38,
-                        color: Color(0xFF8A4D26),
+                Center(
+                  child: Container(
+                    width: 88,
+                    height: 88,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: const Color(0xFFE8B780),
+                        width: 2,
+                      ),
+                      image: const DecorationImage(
+                        image: NetworkImage(
+                          'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=300&h=300&fit=crop',
+                        ),
+                        fit: BoxFit.cover,
                       ),
                     ),
-                    Positioned(
-                      right: 0,
-                      bottom: 0,
-                      child: Container(
-                        width: 23,
-                        height: 23,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: const Color(0xFFFFD8BE),
-                            width: 2,
-                          ),
-                        ),
-                        child: const Icon(
-                          Icons.camera_alt_outlined,
-                          size: 12,
-                          color: AppTheme.primary,
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 6),
-                      const Text(
-                        'Alex User',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(height: 5),
-                      const Text(
-                        'Master Chef in Training',
-                        style: TextStyle(fontSize: 16, color: Colors.white),
-                      ),
-                      const SizedBox(height: 16),
-                      OutlinedButton(
-                        onPressed: onEditProfile,
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Colors.white),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(25),
-                          ),
-                          minimumSize: const Size(138, 42),
-                        ),
-                        child: const Text(
-                          'Edit Profile',
-                          style: TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                      ),
-                    ],
+                const SizedBox(height: 12),
+                const Text(
+                  'Alex User',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF162239),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Master Chef in Training',
+                  style: TextStyle(fontSize: 13, color: Color(0xFF4F5D74)),
+                ),
+                const SizedBox(height: 14),
+                OutlinedButton(
+                  onPressed: onEditProfile,
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Colors.white),
+                    foregroundColor: AppTheme.primary,
+                    backgroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    minimumSize: const Size(114, 38),
+                    padding: const EdgeInsets.symmetric(horizontal: 18),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    'Edit Profile',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
                   ),
                 ),
               ],
@@ -224,15 +206,15 @@ class _ProfileHeader extends StatelessWidget {
             right: 20,
             bottom: 0,
             child: Container(
-              height: 85,
+              height: 72,
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(14),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 14,
-                    offset: const Offset(0, 3),
+                    color: Colors.black.withValues(alpha: 0.07),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
                   ),
                 ],
               ),
@@ -268,7 +250,7 @@ class _StatItem extends StatelessWidget {
           Text(
             value,
             style: const TextStyle(
-              fontSize: 22,
+              fontSize: 18,
               fontWeight: FontWeight.w700,
               color: Color(0xFF222C3E),
             ),
@@ -277,7 +259,7 @@ class _StatItem extends StatelessWidget {
           Text(
             label,
             style: const TextStyle(
-              fontSize: 12,
+              fontSize: 10,
               color: Color(0xFF8EA0BD),
               fontWeight: FontWeight.w600,
             ),
@@ -313,7 +295,7 @@ class _SectionTitle extends StatelessWidget {
         title,
         style: const TextStyle(
           color: Color(0xFF8EA0BD),
-          fontSize: 13,
+          fontSize: 11,
           fontWeight: FontWeight.w700,
           letterSpacing: 0.6,
         ),
@@ -333,7 +315,7 @@ class _MenuCard extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFE5EAF0)),
       ),
       child: Column(
@@ -383,19 +365,19 @@ class _MenuItem extends StatelessWidget {
       onTap: item.onTap,
       borderRadius: BorderRadius.circular(16),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
             Container(
-              width: 42,
-              height: 42,
+              width: 38,
+              height: 38,
               decoration: BoxDecoration(
                 color: item.iconBg,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(11),
               ),
-              child: Icon(item.icon, color: item.iconColor, size: 22),
+              child: Icon(item.icon, color: item.iconColor, size: 20),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -403,7 +385,7 @@ class _MenuItem extends StatelessWidget {
                   Text(
                     item.title,
                     style: const TextStyle(
-                      fontSize: 17,
+                      fontSize: 15,
                       fontWeight: FontWeight.w700,
                       color: Color(0xFF1A2436),
                     ),
@@ -413,7 +395,7 @@ class _MenuItem extends StatelessWidget {
                     Text(
                       item.subtitle,
                       style: const TextStyle(
-                        fontSize: 13,
+                        fontSize: 12,
                         color: Color(0xFF8EA0BD),
                       ),
                     ),
@@ -421,7 +403,11 @@ class _MenuItem extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right_rounded, color: Color(0xFFB7C3D8)),
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: Color(0xFFCBD5E4),
+              size: 20,
+            ),
           ],
         ),
       ),

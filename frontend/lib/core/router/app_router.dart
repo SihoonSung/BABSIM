@@ -13,8 +13,6 @@ import '../../features/profile/presentation/edit_profile_screen.dart';
 import '../../features/profile/presentation/allergies_screen.dart';
 import '../../features/profile/presentation/disliked_ingredients_screen.dart';
 import '../../features/profile/presentation/kitchen_tools_screen.dart';
-import '../../features/profile/presentation/saved_recipes_screen.dart'
-    as profile_saved;
 import '../../features/profile/presentation/cooked_recipes_screen.dart';
 import '../../features/profile/presentation/cooked_photo_gallery_screen.dart';
 import '../../features/profile/presentation/cooked_recipe_photos_screen.dart';
@@ -78,11 +76,6 @@ final appRouter = GoRouter(
             GoRoute(
               path: 'tools',
               builder: (context, state) => const KitchenToolsScreen(),
-            ),
-            GoRoute(
-              path: 'saved',
-              builder: (context, state) =>
-                  const profile_saved.SavedRecipesScreen(),
             ),
             GoRoute(
               path: 'cooked',
