@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../core/api/api_client.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../recipes/data/recipe.dart';
 import '../../recipes/data/saved_recipes_store.dart';
@@ -75,7 +76,7 @@ class _TopHeroSection extends StatelessWidget {
         ),
       ),
       padding: const EdgeInsets.fromLTRB(16, 26, 16, 30),
-      child: const Column(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [_Header(), SizedBox(height: 26), _SavedRecipesCard()],
       ),
@@ -83,34 +84,69 @@ class _TopHeroSection extends StatelessWidget {
   }
 }
 
-class _Header extends StatelessWidget {
+class _Header extends StatefulWidget {
   const _Header();
 
   @override
+  State<_Header> createState() => _HeaderState();
+}
+
+class _HeaderState extends State<_Header> {
+  late final Future<String> _nicknameFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _nicknameFuture = _fetchNickname();
+  }
+
+  Future<String> _fetchNickname() async {
+    try {
+      final response = await ApiClient.instance.dio.get('/auth/me');
+      final data = response.data;
+      if (data is Map<String, dynamic>) {
+        final nickname = data['nickname'] as String?;
+        if (nickname != null && nickname.trim().isNotEmpty) {
+          return nickname;
+        }
+      }
+    } catch (_) {
+      // Keep fallback name when auth API is unavailable.
+    }
+    return 'Guest User';
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return const Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'GOOD AFTERNOON',
-          style: TextStyle(
-            fontSize: 12,
-            letterSpacing: 0.8,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF121D3C),
-          ),
-        ),
-        SizedBox(height: 6),
-        Text(
-          'Alex User',
-          style: TextStyle(
-            fontSize: 31,
-            height: 1,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF101B3B),
-          ),
-        ),
-      ],
+    return FutureBuilder<String>(
+      future: _nicknameFuture,
+      builder: (context, snapshot) {
+        final nickname = snapshot.data ?? 'Loading...';
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'GOOD AFTERNOON',
+              style: TextStyle(
+                fontSize: 12,
+                letterSpacing: 0.8,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF121D3C),
+              ),
+            ),
+            SizedBox(height: 6),
+            Text(
+              nickname,
+              style: TextStyle(
+                fontSize: 31,
+                height: 1,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF101B3B),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

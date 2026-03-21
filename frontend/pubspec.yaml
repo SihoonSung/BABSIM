@@ -18,6 +18,9 @@ dependencies:
   # HTTP 클라이언트
   dio: ^5.7.0
 
+  # Google 로그인
+  google_sign_in: ^6.2.2
+
   # 로컬 스토리지 (유저 ID 등 저장)
   shared_preferences: ^2.3.3
 

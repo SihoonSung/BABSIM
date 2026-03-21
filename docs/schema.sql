@@ -7,6 +7,9 @@ CREATE TABLE IF NOT EXISTS users (
     email TEXT UNIQUE NOT NULL,
     nickname TEXT NOT NULL,
     cooking_level TEXT CHECK (cooking_level IN ('beginner', 'intermediate', 'advanced')) NOT NULL DEFAULT 'beginner',
+    auth_provider TEXT NOT NULL DEFAULT 'local',
+    provider_user_id TEXT UNIQUE,
+    avatar_url TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

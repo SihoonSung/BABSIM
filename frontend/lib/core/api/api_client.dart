@@ -26,4 +26,12 @@ class ApiClient {
   }
 
   Dio get dio => _dio;
+
+  void setAccessToken(String? token) {
+    if (token == null || token.isEmpty) {
+      _dio.options.headers.remove('Authorization');
+      return;
+    }
+    _dio.options.headers['Authorization'] = 'Bearer $token';
+  }
 }

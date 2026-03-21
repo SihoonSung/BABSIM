@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../data/auth_service.dart';
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -15,6 +17,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final FocusNode _passwordFocusNode = FocusNode();
 
   static const Size _designSize = Size(393, 852);
+  bool _isGoogleLoading = false;
 
   @override
   void dispose() {
@@ -36,6 +39,32 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _onSignInPressed() {
     context.go('/home');
+  }
+
+  Future<void> _onGoogleSignInPressed() async {
+    if (_isGoogleLoading) {
+      return;
+    }
+
+    setState(() {
+      _isGoogleLoading = true;
+    });
+
+    try {
+      await AuthService.signInWithGoogle();
+      if (!mounted) {
+        return;
+      }
+      context.go('/home');
+    } catch (e) {
+      _showToast('Google 로그인 실패: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isGoogleLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -123,7 +152,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   height: ss(57),
                   child: _TapOverlay(
                     borderRadius: BorderRadius.circular(ss(16)),
-                    onTap: () => _showToast('Google 로그인은 준비 중입니다.'),
+                    onTap: _onGoogleSignInPressed,
                   ),
                 ),
                 Positioned(
