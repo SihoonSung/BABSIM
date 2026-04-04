@@ -17,7 +17,12 @@ class _LoginScreenState extends State<LoginScreen> {
   final FocusNode _passwordFocusNode = FocusNode();
 
   static const Size _designSize = Size(393, 852);
+  bool _isEmailLoading = false;
   bool _isGoogleLoading = false;
+
+  bool _isGmail(String email) {
+    return email.trim().toLowerCase().endsWith('@gmail.com');
+  }
 
   @override
   void dispose() {
@@ -37,8 +42,45 @@ class _LoginScreenState extends State<LoginScreen> {
       ..showSnackBar(SnackBar(content: Text(message)));
   }
 
-  void _onSignInPressed() {
-    context.go('/home');
+  Future<void> _onSignInPressed() async {
+    if (_isEmailLoading) {
+      return;
+    }
+
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+
+    if (email.isEmpty || password.isEmpty) {
+      _showToast('Please enter your email and password.');
+      return;
+    }
+    if (!_isGmail(email)) {
+      _showToast('Only @gmail.com addresses can sign in.');
+      return;
+    }
+
+    setState(() {
+      _isEmailLoading = true;
+    });
+
+    try {
+      await AuthService.signInWithEmailPassword(
+        email: email,
+        password: password,
+      );
+      if (!mounted) {
+        return;
+      }
+      context.go('/home');
+    } catch (_) {
+      _showToast('Sign in failed.');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isEmailLoading = false;
+        });
+      }
+    }
   }
 
   Future<void> _onGoogleSignInPressed() async {
@@ -56,8 +98,8 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
       context.go('/home');
-    } catch (e) {
-      _showToast('Google 로그인 실패: $e');
+    } catch (_) {
+      _showToast('Google sign in failed.');
     } finally {
       if (mounted) {
         setState(() {
@@ -132,7 +174,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   height: ss(26),
                   child: _TapOverlay(
                     borderRadius: BorderRadius.circular(ss(10)),
-                    onTap: () => _showToast('비밀번호 재설정 화면은 준비 중입니다.'),
+                    onTap: () => context.push('/forgot-password'),
                   ),
                 ),
                 Positioned(
@@ -142,7 +184,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   height: ss(57),
                   child: _TapOverlay(
                     borderRadius: BorderRadius.circular(ss(16)),
-                    onTap: _onSignInPressed,
+                    onTap: _isEmailLoading ? null : _onSignInPressed,
                   ),
                 ),
                 Positioned(
@@ -156,13 +198,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 Positioned(
-                  left: sx(235),
-                  top: sy(736),
-                  width: ss(72),
-                  height: ss(30),
+                  left: sx(128),
+                  top: sy(730),
+                  width: ss(210),
+                  height: ss(42),
                   child: _TapOverlay(
                     borderRadius: BorderRadius.circular(ss(10)),
-                    onTap: () => _showToast('회원가입 화면은 준비 중입니다.'),
+                    onTap: () => context.push('/signup'),
                   ),
                 ),
               ],
@@ -202,15 +244,19 @@ class _InputOverlay extends StatelessWidget {
         keyboardType: keyboardType,
         textInputAction: textInputAction,
         onSubmitted: onSubmitted,
+        maxLines: 1,
+        textAlignVertical: TextAlignVertical.center,
         style: const TextStyle(
-          color: Color(0xFF5A6881),
+          color: Color(0xFF9AAAC0),
           fontSize: 16,
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight.w600,
         ),
         decoration: const InputDecoration(
+          filled: false,
+          fillColor: Colors.transparent,
           border: InputBorder.none,
-          isDense: true,
-          contentPadding: EdgeInsets.fromLTRB(52, 18, 12, 18),
+          isDense: false,
+          contentPadding: EdgeInsets.fromLTRB(52, 16, 12, 16),
         ),
       ),
     );
@@ -220,7 +266,7 @@ class _InputOverlay extends StatelessWidget {
 class _TapOverlay extends StatelessWidget {
   const _TapOverlay({required this.onTap, required this.borderRadius});
 
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
   final BorderRadius borderRadius;
 
   @override

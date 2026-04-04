@@ -500,6 +500,10 @@ class _FeaturedRecipeCardState extends State<_FeaturedRecipeCard> {
   }
 
   void _goToIndex(int index) {
+    if (index == _currentIndex) {
+      _startAutoSlide();
+      return;
+    }
     if (!_pageController.hasClients) {
       return;
     }
@@ -550,18 +554,29 @@ class _FeaturedRecipeCardState extends State<_FeaturedRecipeCard> {
                   final isActive = _currentIndex == index;
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 3),
-                    child: GestureDetector(
-                      onTap: () => _goToIndex(index),
-                      behavior: HitTestBehavior.opaque,
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 220),
-                        width: isActive ? 12 : 8,
-                        height: isActive ? 12 : 8,
-                        decoration: BoxDecoration(
-                          color: isActive
-                              ? const Color(0xFFF39A57)
-                              : Colors.white.withValues(alpha: 0.78),
-                          shape: BoxShape.circle,
+                    child: MouseRegion(
+                      opaque: true,
+                      onEnter: (_) => _goToIndex(index),
+                      onHover: (_) => _goToIndex(index),
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.translucent,
+                        onTap: () => _goToIndex(index),
+                        child: Container(
+                          width: 28,
+                          height: 28,
+                          color: Colors.transparent,
+                          alignment: Alignment.center,
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 220),
+                            width: isActive ? 12 : 8,
+                            height: isActive ? 12 : 8,
+                            decoration: BoxDecoration(
+                              color: isActive
+                                  ? const Color(0xFFF39A57)
+                                  : Colors.white.withValues(alpha: 0.78),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
                         ),
                       ),
                     ),

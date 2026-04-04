@@ -10,6 +10,9 @@ CREATE TABLE IF NOT EXISTS users (
     auth_provider TEXT NOT NULL DEFAULT 'local',
     provider_user_id TEXT UNIQUE,
     avatar_url TEXT,
+    password_hash TEXT,
+    reset_password_token_hash TEXT,
+    reset_password_expires_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

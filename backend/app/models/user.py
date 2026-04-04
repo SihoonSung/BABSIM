@@ -15,4 +15,7 @@ class User(Base):
     auth_provider = Column(String, nullable=False, default="local")
     provider_user_id = Column(String, unique=True, nullable=True)
     avatar_url = Column(String, nullable=True)
+    password_hash = Column(String, nullable=True)
+    reset_password_token_hash = Column(String, nullable=True)
+    reset_password_expires_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

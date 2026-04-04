@@ -72,4 +72,72 @@ class AuthService {
 
     ApiClient.instance.setAccessToken(accessToken);
   }
+
+  static Future<void> signInWithEmailPassword({
+    required String email,
+    required String password,
+  }) async {
+    final response = await ApiClient.instance.dio.post(
+      '/auth/login',
+      data: {'email': email.trim().toLowerCase(), 'password': password},
+    );
+
+    await _saveAuthResponse(response.data as Map<String, dynamic>);
+  }
+
+  static Future<void> signUp({
+    required String email,
+    required String password,
+    required String nickname,
+  }) async {
+    final response = await ApiClient.instance.dio.post(
+      '/auth/signup',
+      data: {
+        'email': email.trim().toLowerCase(),
+        'password': password,
+        'nickname': nickname.trim(),
+      },
+    );
+
+    await _saveAuthResponse(response.data as Map<String, dynamic>);
+  }
+
+  static Future<String?> requestPasswordReset(String email) async {
+    final response = await ApiClient.instance.dio.post(
+      '/auth/forgot-password',
+      data: {'email': email.trim().toLowerCase()},
+    );
+
+    final data = response.data as Map<String, dynamic>;
+    return data['reset_token'] as String?;
+  }
+
+  static Future<void> resetPassword({
+    required String token,
+    required String newPassword,
+  }) async {
+    await ApiClient.instance.dio.post(
+      '/auth/reset-password',
+      data: {'token': token.trim(), 'new_password': newPassword},
+    );
+  }
+
+  static Future<void> _saveAuthResponse(Map<String, dynamic> data) async {
+    final accessToken = data['access_token'] as String?;
+    final user = data['user'] as Map<String, dynamic>?;
+    final userId = user?['id'] as String?;
+
+    if (accessToken == null ||
+        accessToken.isEmpty ||
+        userId == null ||
+        userId.isEmpty) {
+      throw Exception('Invalid auth response from server');
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_accessTokenKey, accessToken);
+    await prefs.setString(_userIdKey, userId);
+
+    ApiClient.instance.setAccessToken(accessToken);
+  }
 }

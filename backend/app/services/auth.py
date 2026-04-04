@@ -1,12 +1,17 @@
 import os
+import hashlib
 from datetime import datetime, timedelta, timezone
 
 from google.auth.transport import requests
 from google.oauth2 import id_token
 from jose import JWTError, jwt
+from passlib.context import CryptContext
 
 
 GOOGLE_ISSUERS = {"accounts.google.com", "https://accounts.google.com"}
+RESET_TOKEN_PURPOSE = "password_reset"
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def _get_required_env(name: str) -> str:
@@ -54,3 +59,43 @@ def decode_access_token(token: str) -> dict:
         return jwt.decode(token, secret_key, algorithms=[algorithm])
     except JWTError as exc:
         raise ValueError("Invalid access token") from exc
+
+
+def hash_password(password: str) -> str:
+    return pwd_context.hash(password)
+
+
+def verify_password(password: str, password_hash: str) -> bool:
+    return pwd_context.verify(password, password_hash)
+
+
+def hash_plain_token(token: str) -> str:
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+def create_password_reset_token(subject: str) -> tuple[str, datetime]:
+    secret_key = _get_required_env("JWT_SECRET_KEY")
+    algorithm = os.getenv("JWT_ALGORITHM", "HS256")
+    expire_minutes = int(os.getenv("PASSWORD_RESET_TOKEN_EXPIRE_MINUTES", "30"))
+
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=expire_minutes)
+    payload = {
+        "sub": subject,
+        "purpose": RESET_TOKEN_PURPOSE,
+        "exp": expires_at,
+    }
+    return jwt.encode(payload, secret_key, algorithm=algorithm), expires_at
+
+
+def decode_password_reset_token(token: str) -> dict:
+    secret_key = _get_required_env("JWT_SECRET_KEY")
+    algorithm = os.getenv("JWT_ALGORITHM", "HS256")
+    try:
+        payload = jwt.decode(token, secret_key, algorithms=[algorithm])
+    except JWTError as exc:
+        raise ValueError("Invalid reset token") from exc
+
+    if payload.get("purpose") != RESET_TOKEN_PURPOSE:
+        raise ValueError("Invalid reset token purpose")
+
+    return payload
