@@ -44,6 +44,8 @@ CREATE TABLE IF NOT EXISTS recipes (
     cooking_time_minutes INTEGER,
     serving_size INTEGER,
     instructions TEXT NOT NULL,
+    instructions_en TEXT,
+    source TEXT,
     image_url TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
