@@ -80,7 +80,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  Future<void> _onGoogleSignInPressed() async {
+  Future<void> _onAppleSignInPressed() async {
     if (_isGoogleLoading) {
       return;
     }
@@ -90,13 +90,13 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      await AuthService.signInWithGoogle();
+      await AuthService.signInWithApple();
       if (!mounted) {
         return;
       }
       context.go('/home');
     } catch (_) {
-      _showToast('Google sign in failed.');
+      _showToast('Apple sign in failed.');
     } finally {
       if (mounted) {
         setState(() {
@@ -191,7 +191,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   height: ss(57),
                   child: _TapOverlay(
                     borderRadius: BorderRadius.circular(ss(16)),
-                    onTap: null,
+                    onTap: _isGoogleLoading ? null : _onAppleSignInPressed,
                   ),
                 ),
                 Positioned(

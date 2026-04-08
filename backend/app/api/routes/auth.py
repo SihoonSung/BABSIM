@@ -16,6 +16,7 @@ from app.services.auth import (
     decode_password_reset_token,
     hash_password,
     hash_plain_token,
+    verify_apple_id_token,
     verify_google_id_token,
     verify_password,
 )
@@ -163,6 +164,57 @@ def google_login(body: GoogleLoginRequest, db: Session = Depends(get_db)):
 
     access_token = create_access_token(str(user.id))
 
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": user,
+    }
+
+
+@router.post("/apple", response_model=GoogleLoginResponse)
+def apple_login(body: GoogleLoginRequest, db: Session = Depends(get_db)):
+    try:
+        token_info = verify_apple_id_token(body.id_token)
+    except Exception as exc:
+        raise HTTPException(status_code=401, detail=f"invalid apple token: {exc}")
+
+    apple_sub = token_info.get("sub")
+    email = token_info.get("email")
+
+    if not apple_sub:
+        raise HTTPException(status_code=400, detail="apple token missing sub claim")
+
+    user = (
+        db.query(User)
+        .filter(User.auth_provider == "apple", User.provider_user_id == apple_sub)
+        .first()
+    )
+
+    if not user:
+        if email:
+            email = _normalize_email(email)
+            user_by_email = db.query(User).filter(User.email == email).first()
+            if user_by_email:
+                user = user_by_email
+                user.auth_provider = "apple"
+                user.provider_user_id = apple_sub
+            else:
+                user = User(
+                    email=email,
+                    nickname=email.split("@")[0],
+                    cooking_level="beginner",
+                    auth_provider="apple",
+                    provider_user_id=apple_sub,
+                )
+                db.add(user)
+        else:
+            # Apple은 첫 로그인 이후 email을 안 줄 수 있음 — sub로만 식별
+            raise HTTPException(status_code=400, detail="email not provided by Apple")
+
+        db.commit()
+        db.refresh(user)
+
+    access_token = create_access_token(str(user.id))
     return {
         "access_token": access_token,
         "token_type": "bearer",

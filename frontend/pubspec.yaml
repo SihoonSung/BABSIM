@@ -21,6 +21,9 @@ dependencies:
   # Google 로그인
   google_sign_in: ^6.2.2
 
+  # Apple 로그인
+  sign_in_with_apple: ^6.1.4
+
   # 로컬 스토리지 (유저 ID 등 저장)
   shared_preferences: ^2.3.3
 

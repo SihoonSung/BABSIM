@@ -1,3 +1,5 @@
+import '../../../core/api/api_client.dart';
+
 /// 레시피 카테고리 목록
 const List<String> recipeCategories = [
   'All',
@@ -55,6 +57,40 @@ class Recipe {
     this.dietaryTags = const [],
   });
 
+  factory Recipe.fromJson(Map<String, dynamic> json) {
+    return Recipe(
+      id: json['id'] as int,
+      name: json['title'] as String,
+      category: json['category'] as String? ?? 'Korean',
+      imageUrl: json['image_url'] as String? ?? '',
+      rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
+      cookTimeMinutes: json['cooking_time_minutes'] as int? ?? 0,
+      difficulty: _parseDifficulty(json['difficulty'] as String?),
+      mealType: _parseMealType(json['meal_type'] as String?),
+      dietaryTags: (json['dietary_tags'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
+    );
+  }
+
+  static Difficulty _parseDifficulty(String? v) {
+    switch (v) {
+      case 'intermediate': return Difficulty.medium;
+      case 'advanced': return Difficulty.hard;
+      default: return Difficulty.easy;
+    }
+  }
+
+  static MealType _parseMealType(String? v) {
+    switch (v) {
+      case 'breakfast': return MealType.breakfast;
+      case 'lunch': return MealType.lunch;
+      case 'snack': return MealType.snack;
+      default: return MealType.dinner;
+    }
+  }
+
   CookingTime get cookingTime {
     if (cookTimeMinutes < 15) return CookingTime.quick;
     if (cookTimeMinutes <= 30) return CookingTime.medium;
@@ -100,116 +136,9 @@ class RecipeFilter {
   static const empty = RecipeFilter();
 }
 
-/// 더미 레시피 데이터
-const List<Recipe> dummyRecipes = [
-  Recipe(
-    id: 1,
-    name: 'Kimchi Stew',
-    category: 'Korean',
-    imageUrl: 'https://images.unsplash.com/photo-1498654896293-37aacf113fd9?w=400&h=300&fit=crop',
-    rating: 4.8,
-    cookTimeMinutes: 30,
-    difficulty: Difficulty.easy,
-    mealType: MealType.dinner,
-    dietaryTags: ['Spicy'],
-  ),
-  Recipe(
-    id: 2,
-    name: 'Creamy Pasta',
-    category: 'Italian',
-    imageUrl: 'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=400&h=300&fit=crop',
-    rating: 4.5,
-    cookTimeMinutes: 15,
-    difficulty: Difficulty.easy,
-    mealType: MealType.dinner,
-    dietaryTags: ['Vegetarian', 'Dairy-Free'],
-  ),
-  Recipe(
-    id: 3,
-    name: 'Avocado Toast',
-    category: 'Western',
-    imageUrl: 'https://images.unsplash.com/photo-1541519227354-08fa5d50c44d?w=400&h=300&fit=crop',
-    rating: 4.9,
-    cookTimeMinutes: 10,
-    difficulty: Difficulty.easy,
-    mealType: MealType.breakfast,
-    dietaryTags: ['Vegan', 'Vegetarian', 'Dairy-Free'],
-  ),
-  Recipe(
-    id: 4,
-    name: 'Fresh Salad',
-    category: 'Vegan',
-    imageUrl: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&h=300&fit=crop',
-    rating: 4.2,
-    cookTimeMinutes: 10,
-    difficulty: Difficulty.easy,
-    mealType: MealType.lunch,
-    dietaryTags: ['Vegan', 'Vegetarian', 'Gluten-Free', 'Dairy-Free'],
-  ),
-  Recipe(
-    id: 5,
-    name: 'Bibimbap',
-    category: 'Korean',
-    imageUrl: 'https://images.unsplash.com/photo-1553163147-622ab57be1c7?w=400&h=300&fit=crop',
-    rating: 4.7,
-    cookTimeMinutes: 25,
-    difficulty: Difficulty.medium,
-    mealType: MealType.lunch,
-    dietaryTags: ['Gluten-Free'],
-  ),
-  Recipe(
-    id: 6,
-    name: 'Miso Ramen',
-    category: 'Japanese',
-    imageUrl: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=400&h=300&fit=crop',
-    rating: 4.6,
-    cookTimeMinutes: 40,
-    difficulty: Difficulty.medium,
-    mealType: MealType.dinner,
-    dietaryTags: [],
-  ),
-  Recipe(
-    id: 7,
-    name: 'Kung Pao Chicken',
-    category: 'Chinese',
-    imageUrl: 'https://images.unsplash.com/photo-1525755662778-989d0524087e?w=400&h=300&fit=crop',
-    rating: 4.4,
-    cookTimeMinutes: 35,
-    difficulty: Difficulty.hard,
-    mealType: MealType.dinner,
-    dietaryTags: ['Spicy'],
-  ),
-  Recipe(
-    id: 8,
-    name: 'Sushi Roll',
-    category: 'Japanese',
-    imageUrl: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400&h=300&fit=crop',
-    rating: 4.8,
-    cookTimeMinutes: 45,
-    difficulty: Difficulty.hard,
-    mealType: MealType.dinner,
-    dietaryTags: ['Dairy-Free', 'Gluten-Free'],
-  ),
-  Recipe(
-    id: 9,
-    name: 'Pancakes',
-    category: 'Western',
-    imageUrl: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=400&h=300&fit=crop',
-    rating: 4.3,
-    cookTimeMinutes: 12,
-    difficulty: Difficulty.easy,
-    mealType: MealType.breakfast,
-    dietaryTags: ['Vegetarian'],
-  ),
-  Recipe(
-    id: 10,
-    name: 'Mapo Tofu',
-    category: 'Chinese',
-    imageUrl: 'https://images.unsplash.com/photo-1582452919651-bf6e86babb18?w=400&h=300&fit=crop',
-    rating: 4.5,
-    cookTimeMinutes: 20,
-    difficulty: Difficulty.medium,
-    mealType: MealType.dinner,
-    dietaryTags: ['Spicy'],
-  ),
-];
+/// API에서 레시피 목록 가져오기
+Future<List<Recipe>> fetchRecipes() async {
+  final response = await ApiClient.instance.dio.get('/recipes/');
+  final data = response.data as List<dynamic>;
+  return data.map((e) => Recipe.fromJson(e as Map<String, dynamic>)).toList();
+}

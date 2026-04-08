@@ -17,9 +17,31 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   RecipeFilter _filter = RecipeFilter.empty;
+  List<Recipe> _allRecipes = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRecipes();
+  }
+
+  Future<void> _loadRecipes() async {
+    try {
+      final recipes = await fetchRecipes();
+      if (mounted) {
+        setState(() {
+          _allRecipes = recipes;
+          _isLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   List<Recipe> get _filteredRecipes {
-    var recipes = List<Recipe>.from(dummyRecipes);
+    var recipes = List<Recipe>.from(_allRecipes);
 
     // 카테고리 필터
     if (_selectedCategory != 'All') {
@@ -212,7 +234,9 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
             const SizedBox(height: 8),
             // 레시피 그리드
             Expanded(
-              child: recipes.isEmpty
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : recipes.isEmpty
                   ? _buildEmptyState()
                   : GridView.builder(
                       padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),

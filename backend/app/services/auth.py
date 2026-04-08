@@ -2,6 +2,7 @@ import os
 import hashlib
 from datetime import datetime, timedelta, timezone
 
+import httpx
 from google.auth.transport import requests
 from google.oauth2 import id_token
 from jose import JWTError, jwt
@@ -9,6 +10,7 @@ from passlib.context import CryptContext
 
 
 GOOGLE_ISSUERS = {"accounts.google.com", "https://accounts.google.com"}
+APPLE_ISSUERS = {"https://appleid.apple.com"}
 RESET_TOKEN_PURPOSE = "password_reset"
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -37,6 +39,44 @@ def verify_google_id_token(token: str) -> dict:
         raise ValueError("Google account email is not verified")
 
     return token_info
+
+
+def verify_apple_id_token(token: str) -> dict:
+    import json
+    import base64
+
+    # Apple 공개키 가져오기
+    response = httpx.get("https://appleid.apple.com/auth/keys")
+    apple_keys = response.json()["keys"]
+
+    # 토큰 헤더에서 kid 추출
+    header_segment = token.split(".")[0]
+    padding = 4 - len(header_segment) % 4
+    header_data = base64.urlsafe_b64decode(header_segment + "=" * padding)
+    header = json.loads(header_data)
+    kid = header.get("kid")
+
+    # 매칭되는 키 찾기
+    matching_key = next((k for k in apple_keys if k["kid"] == kid), None)
+    if not matching_key:
+        raise ValueError("Apple public key not found")
+
+    from jose.backends import RSAKey
+    from jose import jwk
+    public_key = jwk.construct(matching_key)
+
+    algorithm = os.getenv("JWT_ALGORITHM", "HS256")
+    payload = jwt.decode(
+        token,
+        public_key.to_dict(),
+        algorithms=["RS256"],
+        options={"verify_aud": False},
+    )
+
+    if payload.get("iss") not in APPLE_ISSUERS:
+        raise ValueError("Invalid Apple token issuer")
+
+    return payload
 
 
 def create_access_token(subject: str) -> str:
