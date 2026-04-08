@@ -37,6 +37,7 @@ def seed_sample_data(db: Session) -> None:
             UserProfile(
                 user_id=ADMIN_USER_ID,
                 display_name="admin",
+                title="Admin",
                 email="admin@babsim.com",
             )
         )
@@ -47,11 +48,6 @@ def seed_sample_data(db: Session) -> None:
                 recipe_suggestions=True,
                 measurement_units="Metric",
                 language="Korean",
-            )
-        )
-        db.add(
-            UserPreference(
-                user_id=ADMIN_USER_ID,
             )
         )
         db.commit()
