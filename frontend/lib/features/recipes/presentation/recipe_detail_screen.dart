@@ -1,32 +1,73 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/api/api_client.dart';
 import '../data/recipe.dart';
 
-class RecipeDetailScreen extends StatelessWidget {
+class RecipeDetailScreen extends StatefulWidget {
   final int recipeId;
 
   const RecipeDetailScreen({super.key, required this.recipeId});
 
-  Recipe _findRecipe() {
-    for (final recipe in dummyRecipes) {
-      if (recipe.id == recipeId) {
-        return recipe;
-      }
-    }
-    return dummyRecipes.first;
+  @override
+  State<RecipeDetailScreen> createState() => _RecipeDetailScreenState();
+}
+
+class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
+  Map<String, dynamic>? _recipeDetail;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRecipe();
   }
 
-  String _toHighResImage(String imageUrl) {
-    return imageUrl
-        .replaceFirst('w=400', 'w=1200')
-        .replaceFirst('h=300', 'h=900');
+  Future<void> _loadRecipe() async {
+    try {
+      final response = await ApiClient.instance.dio.get('/recipes/${widget.recipeId}');
+      if (mounted) {
+        setState(() {
+          _recipeDetail = response.data as Map<String, dynamic>;
+          _isLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final recipe = _findRecipe();
-    final info = _detailByRecipeId[recipe.id] ?? _fallbackDetail;
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: Color(0xFFF4F4F3),
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_recipeDetail == null) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFF4F4F3),
+        appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0),
+        body: const Center(child: Text('레시피를 불러올 수 없어요.')),
+      );
+    }
+
+    final d = _recipeDetail!;
+    final title = d['title'] as String? ?? '';
+    final category = d['category'] as String? ?? '';
+    final imageUrl = d['image_url'] as String? ?? '';
+    final rating = (d['rating'] as num?)?.toDouble() ?? 0.0;
+    final cookTime = d['cooking_time_minutes'] as int? ?? 0;
+    final servingSize = d['serving_size'] as int? ?? 2;
+    final description = d['description'] as String? ?? '';
+    final instructions = d['instructions'] as String? ?? '';
+    final instructionLines = instructions
+        .split('\n')
+        .where((s) => s.trim().isNotEmpty)
+        .toList();
+    final rawIngredients = d['ingredients'] as List<dynamic>? ?? [];
 
     return Scaffold(
       backgroundColor: const Color(0xFFF4F4F3),
@@ -38,38 +79,26 @@ class RecipeDetailScreen extends StatelessWidget {
                 SizedBox(
                   height: 286,
                   width: double.infinity,
-                  child: Image.network(
-                    _toHighResImage(recipe.imageUrl),
-                    fit: BoxFit.cover,
-                    alignment: const Alignment(0.0, -0.08),
-                    loadingBuilder: (context, child, progress) {
-                      if (progress == null) {
-                        return child;
-                      }
-                      return Container(
-                        color: const Color(0xFF2A2B31),
-                        alignment: Alignment.center,
-                        child: const CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Color(0xFFF0914E),
-                        ),
-                      );
-                    },
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        color: const Color(0xFF2A2B31),
-                        alignment: Alignment.center,
-                        child: Text(
-                          recipe.name,
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 22,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+                  child: imageUrl.isNotEmpty
+                      ? Image.network(
+                          imageUrl,
+                          fit: BoxFit.cover,
+                          alignment: const Alignment(0.0, -0.08),
+                          loadingBuilder: (context, child, progress) {
+                            if (progress == null) return child;
+                            return Container(
+                              color: const Color(0xFF2A2B31),
+                              alignment: Alignment.center,
+                              child: const CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Color(0xFFF0914E),
+                              ),
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) =>
+                              _imageFallback(title),
+                        )
+                      : _imageFallback(title),
                 ),
                 Positioned(
                   top: 18,
@@ -111,7 +140,7 @@ class RecipeDetailScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      recipe.category.toUpperCase(),
+                      category.toUpperCase(),
                       style: const TextStyle(
                         color: Color(0xFFF0914E),
                         fontSize: 12,
@@ -121,7 +150,7 @@ class RecipeDetailScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      recipe.name,
+                      title,
                       style: const TextStyle(
                         color: Color(0xFF16213D),
                         fontSize: 28,
@@ -129,16 +158,18 @@ class RecipeDetailScreen extends StatelessWidget {
                         height: 1.1,
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    Text(
-                      info.description,
-                      style: const TextStyle(
-                        color: Color(0xFF6D798F),
-                        fontSize: 15,
-                        height: 1.5,
-                        fontWeight: FontWeight.w500,
+                    if (description.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        description,
+                        style: const TextStyle(
+                          color: Color(0xFF6D798F),
+                          fontSize: 15,
+                          height: 1.5,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                    ),
+                    ],
                     const SizedBox(height: 18),
                     const Divider(color: Color(0xFFE5E7EA), height: 1),
                     const SizedBox(height: 16),
@@ -146,50 +177,71 @@ class RecipeDetailScreen extends StatelessWidget {
                       children: [
                         _MetaItem(
                           icon: Icons.access_time_rounded,
-                          label: '${recipe.cookTimeMinutes}m',
+                          label: '${cookTime}m',
                         ),
                         const SizedBox(width: 18),
                         _MetaItem(
                           icon: Icons.star_rounded,
-                          label: recipe.rating.toStringAsFixed(1),
+                          label: rating.toStringAsFixed(1),
                           iconColor: const Color(0xFFF5B300),
                         ),
                         const SizedBox(width: 18),
                         _MetaItem(
                           icon: Icons.people_outline_rounded,
-                          label: info.servings,
+                          label: '$servingSize servings',
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
-                    const Divider(color: Color(0xFFE5E7EA), height: 1),
-                    const SizedBox(height: 22),
-                    const _SectionTitle(title: 'Ingredients'),
-                    const SizedBox(height: 14),
-                    _IngredientsCard(items: info.ingredients),
-                    const SizedBox(height: 24),
-                    const _SectionTitle(title: 'Instructions'),
-                    const SizedBox(height: 14),
-                    ...List.generate(
-                      info.instructions.length,
-                      (index) => Padding(
-                        padding: EdgeInsets.only(
-                          bottom: index == info.instructions.length - 1
-                              ? 0
-                              : 16,
-                        ),
-                        child: _InstructionCard(
-                          index: index + 1,
-                          text: info.instructions[index],
+                    if (rawIngredients.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      const Divider(color: Color(0xFFE5E7EA), height: 1),
+                      const SizedBox(height: 22),
+                      const _SectionTitle(title: 'Ingredients'),
+                      const SizedBox(height: 14),
+                      _IngredientsCard(
+                        items: rawIngredients
+                            .map((e) => '${(e as Map)['amount']}')
+                            .toList(),
+                      ),
+                    ],
+                    if (instructionLines.isNotEmpty) ...[
+                      const SizedBox(height: 24),
+                      const _SectionTitle(title: 'Instructions'),
+                      const SizedBox(height: 14),
+                      ...List.generate(
+                        instructionLines.length,
+                        (index) => Padding(
+                          padding: EdgeInsets.only(
+                            bottom: index == instructionLines.length - 1 ? 0 : 16,
+                          ),
+                          child: _InstructionCard(
+                            index: index + 1,
+                            text: instructionLines[index],
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _imageFallback(String title) {
+    return Container(
+      color: const Color(0xFF2A2B31),
+      alignment: Alignment.center,
+      child: Text(
+        title,
+        style: const TextStyle(
+          color: Colors.white70,
+          fontSize: 22,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
@@ -289,11 +341,7 @@ class _IngredientsCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: const Color(0xFFE2E1DE)),
         boxShadow: const [
-          BoxShadow(
-            color: Color(0x08000000),
-            blurRadius: 8,
-            offset: Offset(0, 4),
-          ),
+          BoxShadow(color: Color(0x08000000), blurRadius: 8, offset: Offset(0, 4)),
         ],
       ),
       child: Column(
@@ -306,11 +354,7 @@ class _IngredientsCard extends StatelessWidget {
                   children: [
                     const Padding(
                       padding: EdgeInsets.only(top: 8),
-                      child: Icon(
-                        Icons.circle,
-                        size: 6,
-                        color: Color(0xFFF0914E),
-                      ),
+                      child: Icon(Icons.circle, size: 6, color: Color(0xFFF0914E)),
                     ),
                     const SizedBox(width: 14),
                     Expanded(
@@ -350,11 +394,7 @@ class _InstructionCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: const Color(0xFFE2E1DE)),
         boxShadow: const [
-          BoxShadow(
-            color: Color(0x08000000),
-            blurRadius: 8,
-            offset: Offset(0, 4),
-          ),
+          BoxShadow(color: Color(0x08000000), blurRadius: 8, offset: Offset(0, 4)),
         ],
       ),
       child: Row(
@@ -394,109 +434,3 @@ class _InstructionCard extends StatelessWidget {
     );
   }
 }
-
-class _RecipeDetailInfo {
-  final String description;
-  final String servings;
-  final List<String> ingredients;
-  final List<String> instructions;
-
-  const _RecipeDetailInfo({
-    required this.description,
-    required this.servings,
-    required this.ingredients,
-    required this.instructions,
-  });
-}
-
-const _fallbackDetail = _RecipeDetailInfo(
-  description: 'A balanced and tasty meal that is easy to make at home.',
-  servings: '2 servings',
-  ingredients: [
-    'Main ingredients from your pantry',
-    '2 tbsp olive oil',
-    'Salt and black pepper to taste',
-  ],
-  instructions: [
-    'Prepare all ingredients and preheat your pan.',
-    'Cook over medium heat until tender and flavorful.',
-    'Season to taste and serve immediately.',
-  ],
-);
-
-const Map<int, _RecipeDetailInfo> _detailByRecipeId = {
-  2: _RecipeDetailInfo(
-    description:
-        'A quick and delicious creamy pasta dish that comes together in about 15 minutes.',
-    servings: '2 servings',
-    ingredients: [
-      '250g pasta (fettuccine or penne)',
-      '200ml heavy cream',
-      '50g parmesan cheese, grated',
-      '2 cloves garlic, minced',
-      '2 tbsp butter',
-      'Salt and black pepper to taste',
-    ],
-    instructions: [
-      'Cook pasta in salted boiling water. Reserve a little pasta water.',
-      'Melt butter and saute garlic until fragrant.',
-      'Add cream and parmesan, then stir until smooth.',
-      'Toss in pasta and adjust consistency with pasta water.',
-      'Season and serve warm.',
-    ],
-  ),
-  3: _RecipeDetailInfo(
-    description:
-        'A light avocado toast recipe perfect for brunch or a quick breakfast.',
-    servings: '1 serving',
-    ingredients: [
-      '1 ripe avocado',
-      '2 slices sourdough bread',
-      '1 egg (optional)',
-      'Lemon juice',
-      'Salt and chili flakes',
-    ],
-    instructions: [
-      'Toast bread slices until golden.',
-      'Mash avocado with lemon juice and a pinch of salt.',
-      'Spread avocado on toast and top with egg if desired.',
-      'Finish with chili flakes and serve.',
-    ],
-  ),
-  4: _RecipeDetailInfo(
-    description:
-        'A crisp fresh salad that works great as a side or a healthy lunch.',
-    servings: '2 servings',
-    ingredients: [
-      'Lettuce mix',
-      'Cherry tomatoes',
-      'Cucumber',
-      'Olive oil and lemon dressing',
-      'Salt and pepper',
-    ],
-    instructions: [
-      'Wash and dry all vegetables.',
-      'Slice tomatoes and cucumber.',
-      'Mix vegetables in a large bowl.',
-      'Toss with dressing and season to taste.',
-    ],
-  ),
-  6: _RecipeDetailInfo(
-    description: 'Comforting miso ramen packed with umami broth and noodles.',
-    servings: '2 servings',
-    ingredients: [
-      '2 packs ramen noodles',
-      '2 tbsp miso paste',
-      '4 cups broth',
-      'Soy sauce and sesame oil',
-      'Scallions and boiled egg topping',
-    ],
-    instructions: [
-      'Bring broth to a simmer and dissolve miso paste.',
-      'Season with soy sauce and sesame oil.',
-      'Cook noodles separately and drain.',
-      'Combine noodles with broth and add toppings.',
-      'Serve hot.',
-    ],
-  ),
-};

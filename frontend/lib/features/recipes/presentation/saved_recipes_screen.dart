@@ -26,12 +26,7 @@ class _SavedRecipesScreenState extends State<SavedRecipesScreen> {
   }
 
   List<Recipe> get _filteredRecipes {
-    var recipes = dummyRecipes
-        .where(
-          (recipe) =>
-              SavedRecipesStore.savedRecipeIds.value.contains(recipe.id),
-        )
-        .toList();
+    var recipes = <Recipe>[];
 
     if (_selectedCategory != 'All') {
       recipes = recipes

@@ -516,12 +516,14 @@ class _FeaturedRecipeCardState extends State<_FeaturedRecipeCard> {
   }
 
   Recipe _findRecipe(int recipeId) {
-    for (final recipe in dummyRecipes) {
-      if (recipe.id == recipeId) {
-        return recipe;
-      }
-    }
-    return dummyRecipes.first;
+    return Recipe(
+      id: recipeId,
+      name: '',
+      category: 'Korean',
+      imageUrl: '',
+      rating: 0,
+      cookTimeMinutes: 0,
+    );
   }
 
   @override
