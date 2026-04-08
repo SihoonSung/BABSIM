@@ -13,11 +13,49 @@ from app.models.recipe import (
     SavedRecipe,
 )
 from app.models.user import User
+from app.services.auth import hash_password
 
 SAMPLE_USER_ID = uuid.UUID("11111111-1111-1111-1111-111111111111")
+ADMIN_USER_ID = uuid.UUID("00000000-0000-0000-0000-000000000001")
 
 
 def seed_sample_data(db: Session) -> None:
+    # admin 테스트 계정
+    existing_admin = db.query(User).filter(User.id == ADMIN_USER_ID).first()
+    if not existing_admin:
+        admin = User(
+            id=ADMIN_USER_ID,
+            email="admin@babsim.com",
+            nickname="admin",
+            cooking_level="intermediate",
+            auth_provider="local",
+            password_hash=hash_password("admin"),
+        )
+        db.add(admin)
+        db.flush()
+        db.add(
+            UserProfile(
+                user_id=ADMIN_USER_ID,
+                display_name="admin",
+                email="admin@babsim.com",
+            )
+        )
+        db.add(
+            UserSetting(
+                user_id=ADMIN_USER_ID,
+                expiration_alerts=True,
+                recipe_suggestions=True,
+                measurement_units="Metric",
+                language="Korean",
+            )
+        )
+        db.add(
+            UserPreference(
+                user_id=ADMIN_USER_ID,
+            )
+        )
+        db.commit()
+
     existing_user = db.query(User).filter(User.id == SAMPLE_USER_ID).first()
     if existing_user:
         return
@@ -27,6 +65,8 @@ def seed_sample_data(db: Session) -> None:
         email="alex.user@example.com",
         nickname="Alex User",
         cooking_level="intermediate",
+        auth_provider="local",
+        password_hash=hash_password("password123"),
     )
     db.add(user)
     db.flush()

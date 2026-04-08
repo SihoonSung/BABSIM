@@ -172,7 +172,7 @@ def google_login(body: GoogleLoginRequest, db: Session = Depends(get_db)):
 
 @router.post("/signup", response_model=GoogleLoginResponse)
 def sign_up(body: SignUpRequest, db: Session = Depends(get_db)):
-    email = _ensure_gmail_email(body.email)
+    email = _normalize_email(body.email)
 
     existing = db.query(User).filter(User.email == email).first()
     if existing:
@@ -199,7 +199,7 @@ def sign_up(body: SignUpRequest, db: Session = Depends(get_db)):
 
 @router.post("/login", response_model=GoogleLoginResponse)
 def email_password_login(body: EmailPasswordLoginRequest, db: Session = Depends(get_db)):
-    email = _ensure_gmail_email(body.email)
+    email = _normalize_email(body.email)
 
     user = db.query(User).filter(User.email == email).first()
     if not user or not user.password_hash:

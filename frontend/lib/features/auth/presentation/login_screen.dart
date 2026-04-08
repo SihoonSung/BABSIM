@@ -54,10 +54,7 @@ class _LoginScreenState extends State<LoginScreen> {
       _showToast('Please enter your email and password.');
       return;
     }
-    if (!_isGmail(email)) {
-      _showToast('Only @gmail.com addresses can sign in.');
-      return;
-    }
+
 
     setState(() {
       _isEmailLoading = true;
@@ -194,7 +191,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   height: ss(57),
                   child: _TapOverlay(
                     borderRadius: BorderRadius.circular(ss(16)),
-                    onTap: _onGoogleSignInPressed,
+                    onTap: null,
                   ),
                 ),
                 Positioned(
