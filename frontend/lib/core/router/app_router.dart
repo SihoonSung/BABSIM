@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/auth/presentation/loading_screen.dart';
@@ -20,6 +21,7 @@ import '../../features/profile/presentation/cooked_photo_gallery_screen.dart';
 import '../../features/profile/presentation/cooked_recipe_photos_screen.dart';
 import '../../features/profile/presentation/my_fridges_screen.dart';
 import '../../features/profile/presentation/settings_screen.dart';
+import '../../features/onboarding/presentation/onboarding_screen.dart';
 import '../shell/main_shell.dart';
 
 final appRouter = GoRouter(
@@ -35,6 +37,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/forgot-password',
       builder: (context, state) => const ForgotPasswordScreen(),
+    ),
+    GoRoute(
+      path: '/onboarding',
+      builder: (context, state) => const OnboardingScreen(),
     ),
     GoRoute(
       path: '/saved-recipies',
@@ -54,9 +60,15 @@ final appRouter = GoRouter(
           routes: [
             GoRoute(
               path: ':id',
-              builder: (context, state) => RecipeDetailScreen(
-                recipeId: int.parse(state.pathParameters['id']!),
-              ),
+              builder: (context, state) {
+                final id = int.tryParse(state.pathParameters['id'] ?? '');
+                if (id == null) {
+                  return const Scaffold(
+                    body: Center(child: Text('잘못된 레시피 ID입니다.')),
+                  );
+                }
+                return RecipeDetailScreen(recipeId: id);
+              },
             ),
           ],
         ),

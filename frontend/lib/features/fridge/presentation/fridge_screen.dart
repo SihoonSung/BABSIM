@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../data/fridge_item.dart';
+import '../../../core/api/api_client.dart';
 import '../../../core/theme/app_theme.dart';
 import 'add_ingredient_sheet.dart';
 import 'ingredient_detail_screen.dart';
@@ -16,14 +18,65 @@ class FridgeScreen extends StatefulWidget {
 class _FridgeScreenState extends State<FridgeScreen> {
   int _fridgeTab = 0;
   String _selectedCategory = 'All';
-  final List<FridgeItem> _mainItems = List.from(dummyMainFridgeItems);
-  final List<FridgeItem> _kimchiItems = List.from(dummyKimchiFridgeItems);
+  List<FridgeItem> _allItems = [];
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   bool _isEditing = false;
+  bool _isLoading = true;
+  String? _userId;
 
-  List<FridgeItem> get _currentItems =>
-      _fridgeTab == 0 ? _mainItems : _kimchiItems;
+  @override
+  void initState() {
+    super.initState();
+    _loadItems();
+  }
+
+  Future<void> _loadItems() async {
+    final prefs = await SharedPreferences.getInstance();
+    _userId = prefs.getString('user_id');
+    if (_userId == null) {
+      if (mounted) setState(() => _isLoading = false);
+      return;
+    }
+    await _fetchItems();
+  }
+
+  Future<void> _fetchItems() async {
+    try {
+      final response = await ApiClient.instance.dio.get('/fridge/$_userId');
+      final data = response.data as List<dynamic>;
+      if (mounted) {
+        setState(() {
+          _allItems = data
+              .map((e) => FridgeItem.fromJson(e as Map<String, dynamic>))
+              .toList();
+          _isLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  List<FridgeItem> get _currentItems {
+    // Main Fridge: fridge_id가 null이거나 "Main" 이름인 냉장고
+    // Kimchi Fridge: "Kimchi" 이름인 냉장고
+    if (_fridgeTab == 0) {
+      return _allItems
+          .where((e) =>
+              e.fridgeName == null ||
+              e.fridgeName!.toLowerCase().contains('main') ||
+              (!e.fridgeName!.toLowerCase().contains('kimchi') &&
+               !e.fridgeName!.toLowerCase().contains('wine')))
+          .toList();
+    } else {
+      return _allItems
+          .where((e) =>
+              e.fridgeName != null &&
+              e.fridgeName!.toLowerCase().contains('kimchi'))
+          .toList();
+    }
+  }
 
   List<FridgeItem> get _filtered {
     var items = _currentItems;
@@ -40,26 +93,26 @@ class _FridgeScreenState extends State<FridgeScreen> {
     return items;
   }
 
-  void _removeItem(int id) {
-    setState(() {
-      if (_fridgeTab == 0) {
-        _mainItems.removeWhere((e) => e.id == id);
-      } else {
-        _kimchiItems.removeWhere((e) => e.id == id);
-      }
-    });
+  Future<void> _removeItem(int id) async {
+    if (_userId == null) return;
+    try {
+      await ApiClient.instance.dio.delete('/fridge/$_userId/$id');
+      setState(() => _allItems.removeWhere((e) => e.id == id));
+    } catch (_) {}
   }
 
-  void _updateItem(FridgeItem updated) {
-    setState(() {
-      if (_fridgeTab == 0) {
-        final index = _mainItems.indexWhere((e) => e.id == updated.id);
-        if (index != -1) _mainItems[index] = updated;
-      } else {
-        final index = _kimchiItems.indexWhere((e) => e.id == updated.id);
-        if (index != -1) _kimchiItems[index] = updated;
-      }
-    });
+  Future<void> _updateItem(FridgeItem updated) async {
+    if (_userId == null) return;
+    try {
+      await ApiClient.instance.dio.patch(
+        '/fridge/$_userId/${updated.id}',
+        data: updated.toUpdateJson(),
+      );
+      setState(() {
+        final index = _allItems.indexWhere((e) => e.id == updated.id);
+        if (index != -1) _allItems[index] = updated;
+      });
+    } catch (_) {}
   }
 
   void _openDetail(FridgeItem item) {
@@ -85,20 +138,24 @@ class _FridgeScreenState extends State<FridgeScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => AddIngredientSheet(
-        onAdd: (name, category, quantity) {
-          setState(() {
-            final newItem = FridgeItem(
-              id: DateTime.now().millisecondsSinceEpoch,
-              name: name,
-              category: category,
-              quantity: quantity.isEmpty ? null : quantity,
+        onAdd: (name, category, quantity) async {
+          if (_userId == null) return;
+          try {
+            final response = await ApiClient.instance.dio.post(
+              '/fridge/$_userId/manual',
+              data: {
+                'name': name,
+                'category': category,
+                'quantity': quantity.isEmpty ? null : quantity,
+              },
             );
-            if (_fridgeTab == 0) {
-              _mainItems.add(newItem);
-            } else {
-              _kimchiItems.add(newItem);
+            // 추가 후 서버에서 전체 목록 재조회
+            final id = response.data['id'] as int?;
+            final ingredientId = response.data['ingredient_id'] as int?;
+            if (id != null && ingredientId != null) {
+              await _fetchItems();
             }
-          });
+          } catch (_) {}
         },
       ),
     );
@@ -149,7 +206,6 @@ class _FridgeScreenState extends State<FridgeScreen> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Main Fridge / Kimchi Fridge 탭
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: _FridgeTabSwitch(
@@ -160,7 +216,6 @@ class _FridgeScreenState extends State<FridgeScreen> {
               }),
             ),
           ),
-          // 검색바
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: TextField(
@@ -191,15 +246,15 @@ class _FridgeScreenState extends State<FridgeScreen> {
               ),
             ),
           ),
-          // 카테고리 탭
           _CategoryTabs(
             selected: _selectedCategory,
             onSelect: (cat) => setState(() => _selectedCategory = cat),
           ),
           const SizedBox(height: 8),
-          // 재료 그리드
           Expanded(
-            child: _filtered.isEmpty
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _filtered.isEmpty
                 ? const _EmptyState()
                 : GridView.builder(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),

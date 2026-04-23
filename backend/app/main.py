@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import app as app_routes
-from app.api.routes import users, fridge, recipes, auth
+from app.api.routes import users, fridge, recipes, auth, preferences
 from app.database import Base, SessionLocal, engine
 from app.models import fridge as fridge_models
 from app.models import ingredient as ingredient_models
@@ -26,6 +26,7 @@ app.include_router(fridge.router, prefix="/fridge", tags=["fridge"])
 app.include_router(recipes.router, prefix="/recipes", tags=["recipes"])
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(app_routes.router, prefix="/app", tags=["app"])
+app.include_router(preferences.router, prefix="/preferences", tags=["preferences"])
 
 
 @app.on_event("startup")

@@ -18,57 +18,63 @@ class _SavedRecipesScreenState extends State<SavedRecipesScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   RecipeFilter _filter = RecipeFilter.empty;
+  List<Recipe> _allRecipes = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    SavedRecipesStore.ensureMinimumSavedRecipes(6);
+    _loadRecipes();
   }
 
-  List<Recipe> get _filteredRecipes {
-    var recipes = <Recipe>[];
+  Future<void> _loadRecipes() async {
+    try {
+      final recipes = await fetchRecipes();
+      if (mounted) {
+        setState(() {
+          _allRecipes = recipes;
+          _isLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  List<Recipe> _filteredRecipes(Set<int> savedIds) {
+    var recipes = _allRecipes.where((r) => savedIds.contains(r.id)).toList();
 
     if (_selectedCategory != 'All') {
-      recipes = recipes
-          .where((recipe) => recipe.category == _selectedCategory)
-          .toList();
+      recipes = recipes.where((r) => r.category == _selectedCategory).toList();
     }
-
     if (_searchQuery.isNotEmpty) {
       recipes = recipes
-          .where(
-            (recipe) =>
-                recipe.name.toLowerCase().contains(_searchQuery.toLowerCase()),
-          )
+          .where((r) =>
+              r.name.toLowerCase().contains(_searchQuery.toLowerCase()))
           .toList();
     }
-
     if (_filter.cookingTime != null) {
-      recipes = recipes
-          .where((recipe) => recipe.cookingTime == _filter.cookingTime)
-          .toList();
+      recipes =
+          recipes.where((r) => r.cookingTime == _filter.cookingTime).toList();
     }
-
-
     if (_filter.mealTypes.isNotEmpty) {
       recipes = recipes
-          .where((recipe) => _filter.mealTypes.contains(recipe.mealType))
+          .where((r) => _filter.mealTypes.contains(r.mealType))
           .toList();
     }
     if (_filter.dietaryTags.isNotEmpty) {
       recipes = recipes
-          .where((recipe) => _filter.dietaryTags.every((tag) => recipe.dietaryTags.contains(tag)))
+          .where((r) =>
+              _filter.dietaryTags.every((tag) => r.dietaryTags.contains(tag)))
           .toList();
     }
-
     return recipes;
   }
 
   void _openFilters() async {
-    final result = await showRecipeFilterSheet(context, currentFilter: _filter);
-    if (result != null) {
-      setState(() => _filter = result);
-    }
+    final result =
+        await showRecipeFilterSheet(context, currentFilter: _filter);
+    if (result != null) setState(() => _filter = result);
   }
 
   @override
@@ -83,8 +89,8 @@ class _SavedRecipesScreenState extends State<SavedRecipesScreen> {
       backgroundColor: Colors.white,
       body: ValueListenableBuilder<Set<int>>(
         valueListenable: SavedRecipesStore.savedRecipeIds,
-        builder: (context, savedRecipeIds, child) {
-          final recipes = _filteredRecipes;
+        builder: (context, savedIds, child) {
+          final recipes = _filteredRecipes(savedIds);
           return SafeArea(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -121,8 +127,7 @@ class _SavedRecipesScreenState extends State<SavedRecipesScreen> {
                       Expanded(
                         child: TextField(
                           controller: _searchController,
-                          onChanged: (value) =>
-                              setState(() => _searchQuery = value),
+                          onChanged: (v) => setState(() => _searchQuery = v),
                           decoration: InputDecoration(
                             hintText: 'Search saved recipes...',
                             hintStyle: const TextStyle(
@@ -135,9 +140,8 @@ class _SavedRecipesScreenState extends State<SavedRecipesScreen> {
                             ),
                             filled: true,
                             fillColor: const Color(0xFFF5F5F5),
-                            contentPadding: const EdgeInsets.symmetric(
-                              vertical: 12,
-                            ),
+                            contentPadding:
+                                const EdgeInsets.symmetric(vertical: 12),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide.none,
@@ -166,9 +170,8 @@ class _SavedRecipesScreenState extends State<SavedRecipesScreen> {
                             borderRadius: BorderRadius.circular(12),
                             border: _filter.hasActiveFilters
                                 ? Border.all(
-                                    color: AppTheme.primary.withValues(
-                                      alpha: 0.3,
-                                    ),
+                                    color:
+                                        AppTheme.primary.withValues(alpha: 0.3),
                                   )
                                 : null,
                           ),
@@ -234,10 +237,13 @@ class _SavedRecipesScreenState extends State<SavedRecipesScreen> {
                 ),
                 const SizedBox(height: 8),
                 Expanded(
-                  child: recipes.isEmpty
+                  child: _isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : recipes.isEmpty
                       ? const _SavedRecipesEmptyState()
                       : GridView.builder(
-                          padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
+                          padding:
+                              const EdgeInsets.fromLTRB(20, 8, 20, 40),
                           gridDelegate:
                               const SliverGridDelegateWithFixedCrossAxisCount(
                                 crossAxisCount: 2,
@@ -247,16 +253,14 @@ class _SavedRecipesScreenState extends State<SavedRecipesScreen> {
                               ),
                           itemCount: recipes.length,
                           itemBuilder: (context, index) {
+                            final recipe = recipes[index];
                             return _SavedRecipeCard(
-                              recipe: recipes[index],
-                              isSaved: savedRecipeIds.contains(
-                                recipes[index].id,
-                              ),
+                              recipe: recipe,
+                              isSaved: savedIds.contains(recipe.id),
                               onTap: () =>
-                                  context.go('/recipes/${recipes[index].id}'),
-                              onHeartTap: () => SavedRecipesStore.toggleSaved(
-                                recipes[index].id,
-                              ),
+                                  context.go('/recipes/${recipe.id}'),
+                              onHeartTap: () =>
+                                  SavedRecipesStore.toggleSaved(recipe.id),
                             );
                           },
                         ),
@@ -340,21 +344,14 @@ class _SavedRecipeCard extends StatelessWidget {
                     borderRadius: const BorderRadius.vertical(
                       top: Radius.circular(14),
                     ),
-                    child: Image.network(
-                      recipe.imageUrl,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => Container(
-                        color: const Color(0xFFF0F0F0),
-                        child: const Center(
-                          child: Icon(
-                            Icons.restaurant,
-                            size: 40,
-                            color: Color(0xFFCCCCCC),
-                          ),
-                        ),
-                      ),
-                    ),
+                    child: recipe.imageUrl.isNotEmpty
+                        ? Image.network(
+                            recipe.imageUrl,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => _placeholder(),
+                          )
+                        : _placeholder(),
                   ),
                   Positioned(
                     top: 8,
@@ -440,6 +437,15 @@ class _SavedRecipeCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _placeholder() {
+    return Container(
+      color: const Color(0xFFF0F0F0),
+      child: const Center(
+        child: Icon(Icons.restaurant, size: 40, color: Color(0xFFCCCCCC)),
       ),
     );
   }

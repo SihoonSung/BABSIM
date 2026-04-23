@@ -7,6 +7,11 @@ import '../../../core/api/api_client.dart';
 class AuthService {
   AuthService._();
 
+  static const _googleIosClientId = String.fromEnvironment(
+    'GOOGLE_IOS_CLIENT_ID',
+    defaultValue: '',
+  );
+
   static const _googleServerClientId = String.fromEnvironment(
     'GOOGLE_SERVER_CLIENT_ID',
     defaultValue: '',
@@ -16,10 +21,25 @@ class AuthService {
   static const _userIdKey = 'user_id';
 
   static final GoogleSignIn _googleSignIn = GoogleSignIn(
+    clientId: _googleIosClientId.isEmpty ? null : _googleIosClientId,
     serverClientId: _googleServerClientId.isEmpty
         ? null
         : _googleServerClientId,
   );
+
+  static bool get isGoogleConfigured => _googleServerClientId.isNotEmpty;
+
+  static String get googleConfigurationHelp =>
+      'Missing GOOGLE_SERVER_CLIENT_ID. Run with --dart-define=GOOGLE_SERVER_CLIENT_ID=<web-client-id>.';
+
+  // 앱 시작 시 저장된 토큰을 Dio 헤더에 복원한다.
+  static Future<bool> restoreSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString(_accessTokenKey);
+    if (token == null || token.isEmpty) return false;
+    ApiClient.instance.setAccessToken(token);
+    return true;
+  }
 
   static Future<void> signOutAll() async {
     final prefs = await SharedPreferences.getInstance();
@@ -27,7 +47,6 @@ class AuthService {
     await prefs.remove(_userIdKey);
     ApiClient.instance.setAccessToken(null);
 
-    // Ignore errors for first-time users who are not signed in yet.
     try {
       await _googleSignIn.signOut();
     } catch (_) {}
@@ -55,6 +74,10 @@ class AuthService {
   }
 
   static Future<void> signInWithGoogle() async {
+    if (!isGoogleConfigured) {
+      throw Exception(googleConfigurationHelp);
+    }
+
     // Force account picker every time the Google button is tapped.
     try {
       await _googleSignIn.signOut();
@@ -76,23 +99,7 @@ class AuthService {
       data: {'id_token': idToken},
     );
 
-    final data = response.data as Map<String, dynamic>;
-    final accessToken = data['access_token'] as String?;
-    final user = data['user'] as Map<String, dynamic>?;
-    final userId = user?['id'] as String?;
-
-    if (accessToken == null ||
-        accessToken.isEmpty ||
-        userId == null ||
-        userId.isEmpty) {
-      throw Exception('Invalid auth response from server');
-    }
-
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_accessTokenKey, accessToken);
-    await prefs.setString(_userIdKey, userId);
-
-    ApiClient.instance.setAccessToken(accessToken);
+    await _saveAuthResponse(response.data as Map<String, dynamic>);
   }
 
   static Future<void> signInWithEmailPassword({

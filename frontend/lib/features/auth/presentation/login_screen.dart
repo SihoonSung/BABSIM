@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../data/auth_service.dart';
 
@@ -36,6 +36,13 @@ class _LoginScreenState extends State<LoginScreen> {
       ..showSnackBar(SnackBar(content: Text(message)));
   }
 
+  Future<void> _navigateAfterAuth() async {
+    final prefs = await SharedPreferences.getInstance();
+    final onboardingDone = prefs.getBool('onboarding_done') ?? false;
+    if (!mounted) return;
+    context.go(onboardingDone ? '/home' : '/onboarding');
+  }
+
   Future<void> _onSignInPressed() async {
     if (_isEmailLoading) return;
 
@@ -52,7 +59,7 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       await AuthService.signInWithEmailPassword(email: email, password: password);
       if (!mounted) return;
-      context.go('/home');
+      await _navigateAfterAuth();
     } catch (_) {
       _showToast('Sign in failed.');
     } finally {
@@ -62,13 +69,19 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _onGoogleSignInPressed() async {
     if (_isSocialLoading) return;
+
+    if (!AuthService.isGoogleConfigured) {
+      _showToast(AuthService.googleConfigurationHelp);
+      return;
+    }
+
     setState(() => _isSocialLoading = true);
     try {
       await AuthService.signInWithGoogle();
       if (!mounted) return;
-      context.go('/home');
-    } catch (_) {
-      _showToast('Google sign in failed.');
+      await _navigateAfterAuth();
+    } catch (e) {
+      _showToast(_readableError(e, fallback: 'Google sign in failed.'));
     } finally {
       if (mounted) setState(() => _isSocialLoading = false);
     }
@@ -80,12 +93,23 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       await AuthService.signInWithApple();
       if (!mounted) return;
-      context.go('/home');
-    } catch (_) {
-      _showToast('Apple sign in failed.');
+      await _navigateAfterAuth();
+    } catch (e) {
+      _showToast(_readableError(e, fallback: 'Apple sign in failed.'));
     } finally {
       if (mounted) setState(() => _isSocialLoading = false);
     }
+  }
+
+  String _readableError(Object error, {required String fallback}) {
+    final raw = error.toString();
+    if (raw.startsWith('Exception: ')) {
+      return raw.replaceFirst('Exception: ', '');
+    }
+    if (raw.trim().isEmpty) {
+      return fallback;
+    }
+    return raw;
   }
 
   @override

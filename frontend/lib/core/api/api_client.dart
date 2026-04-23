@@ -1,7 +1,4 @@
-import 'dart:io';
-
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 
 class ApiClient {
   ApiClient._internal() {
@@ -20,6 +17,10 @@ class ApiClient {
   late final Dio _dio;
 
   static String _resolveBaseUrl() {
+    const fromEnv = String.fromEnvironment('API_BASE_URL', defaultValue: '');
+    if (fromEnv.isNotEmpty) {
+      return fromEnv;
+    }
     return 'https://babsim-production.up.railway.app';
   }
 

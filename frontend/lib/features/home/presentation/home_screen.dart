@@ -3,9 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/api/api_client.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../fridge/data/fridge_item.dart';
 import '../../recipes/data/recipe.dart';
 import '../../recipes/data/saved_recipes_store.dart';
 
@@ -110,10 +112,15 @@ class _HeaderState extends State<_Header> {
           return nickname;
         }
       }
-    } catch (_) {
-      // Keep fallback name when auth API is unavailable.
-    }
-    return 'Guest User';
+    } catch (_) {}
+    return 'User';
+  }
+
+  String _greeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'GOOD MORNING';
+    if (hour < 18) return 'GOOD AFTERNOON';
+    return 'GOOD EVENING';
   }
 
   @override
@@ -121,23 +128,23 @@ class _HeaderState extends State<_Header> {
     return FutureBuilder<String>(
       future: _nicknameFuture,
       builder: (context, snapshot) {
-        final nickname = snapshot.data ?? 'Loading...';
+        final nickname = snapshot.data ?? '';
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'GOOD AFTERNOON',
-              style: TextStyle(
+              _greeting(),
+              style: const TextStyle(
                 fontSize: 12,
                 letterSpacing: 0.8,
                 fontWeight: FontWeight.w700,
                 color: Color(0xFF121D3C),
               ),
             ),
-            SizedBox(height: 6),
+            const SizedBox(height: 6),
             Text(
-              nickname,
-              style: TextStyle(
+              nickname.isNotEmpty ? nickname : '...',
+              style: const TextStyle(
                 fontSize: 31,
                 height: 1,
                 fontWeight: FontWeight.w700,
@@ -309,47 +316,88 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-class _ExpiringSoonList extends StatelessWidget {
+// 만료 임박 재료 목록 — 서버에서 가져온다
+class _ExpiringSoonList extends StatefulWidget {
   const _ExpiringSoonList();
 
   @override
-  Widget build(BuildContext context) {
-    const items = [
-      _ExpiringItem(
-        name: 'Milk',
-        daysLeftLabel: '1 day',
-        fridgeLabel: 'FRIDGE A',
-        illustration: _MilkIllustration(),
-      ),
-      _ExpiringItem(
-        name: 'Spinach',
-        daysLeftLabel: '2d',
-        fridgeLabel: 'FRIDGE A',
-        illustration: _SpinachIllustration(),
-      ),
-      _ExpiringItem(
-        name: 'Eggs',
-        daysLeftLabel: '3d',
-        fridgeLabel: 'FRIDGE A',
-        illustration: _EggIllustration(),
-      ),
-      _ExpiringItem(
-        name: 'Butter',
-        daysLeftLabel: '4d',
-        fridgeLabel: 'FRIDGE B',
-        illustration: _ButterIllustration(),
-      ),
-    ];
+  State<_ExpiringSoonList> createState() => _ExpiringSoonListState();
+}
 
+class _ExpiringSoonListState extends State<_ExpiringSoonList> {
+  List<FridgeItem> _items = [];
+  bool _loaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString('user_id');
+      if (userId == null) {
+        if (mounted) setState(() => _loaded = true);
+        return;
+      }
+      final response = await ApiClient.instance.dio.get('/fridge/$userId');
+      final data = response.data as List<dynamic>;
+      final items = data
+          .map((e) => FridgeItem.fromJson(e as Map<String, dynamic>))
+          .where((e) => e.daysUntilExpiry != null && e.daysUntilExpiry! <= 7)
+          .toList()
+        ..sort((a, b) => (a.daysUntilExpiry ?? 999)
+            .compareTo(b.daysUntilExpiry ?? 999));
+      if (mounted) {
+        setState(() {
+          _items = items.take(8).toList();
+          _loaded = true;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _loaded = true);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_loaded) {
+      return const SizedBox(
+        height: 142,
+        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      );
+    }
+    if (_items.isEmpty) {
+      return const SizedBox(
+        height: 80,
+        child: Center(
+          child: Text(
+            'No items expiring soon',
+            style: TextStyle(color: Color(0xFFA3AEC2), fontSize: 14),
+          ),
+        ),
+      );
+    }
     return SizedBox(
       height: 142,
       child: ListView.separated(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         physics: const BouncingScrollPhysics(),
         scrollDirection: Axis.horizontal,
-        itemCount: items.length,
+        itemCount: _items.length,
         separatorBuilder: (_, _) => const SizedBox(width: 10),
-        itemBuilder: (context, index) => items[index],
+        itemBuilder: (context, index) {
+          final item = _items[index];
+          final days = item.daysUntilExpiry!;
+          final emoji = categoryEmojis[item.category] ?? '🫙';
+          return _ExpiringItem(
+            name: item.name,
+            daysLeftLabel: days == 1 ? '1 day' : '${days}d',
+            emoji: emoji,
+          );
+        },
       ),
     );
   }
@@ -358,14 +406,12 @@ class _ExpiringSoonList extends StatelessWidget {
 class _ExpiringItem extends StatelessWidget {
   final String name;
   final String daysLeftLabel;
-  final String fridgeLabel;
-  final Widget illustration;
+  final String emoji;
 
   const _ExpiringItem({
     required this.name,
     required this.daysLeftLabel,
-    required this.fridgeLabel,
-    required this.illustration,
+    required this.emoji,
   });
 
   @override
@@ -408,26 +454,21 @@ class _ExpiringItem extends StatelessWidget {
           const SizedBox(height: 2),
           SizedBox(
             height: 44,
-            child: Align(alignment: Alignment.centerLeft, child: illustration),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(emoji, style: const TextStyle(fontSize: 36)),
+            ),
           ),
           const Spacer(),
           Text(
             name,
             style: const TextStyle(
-              fontSize: 16,
+              fontSize: 14,
               fontWeight: FontWeight.w800,
               color: Color(0xFF18203A),
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            fridgeLabel,
-            style: const TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.3,
-              color: Color(0xFFA3AEC2),
-            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
@@ -435,6 +476,7 @@ class _ExpiringItem extends StatelessWidget {
   }
 }
 
+// Featured 레시피 카드 — 서버에서 레시피를 가져와 상위 4개 표시
 class _FeaturedRecipeCard extends StatefulWidget {
   const _FeaturedRecipeCard();
 
@@ -444,37 +486,32 @@ class _FeaturedRecipeCard extends StatefulWidget {
 
 class _FeaturedRecipeCardState extends State<_FeaturedRecipeCard> {
   static const _autoSlideInterval = Duration(seconds: 4);
-  static const List<_FeaturedRecipeEntry> _entries = [
-    _FeaturedRecipeEntry(
-      recipeId: 2,
-      matchLabel: '95% Match',
-      usesLabel: 'Uses: Milk, Garlic, Butter',
-    ),
-    _FeaturedRecipeEntry(
-      recipeId: 3,
-      matchLabel: '93% Match',
-      usesLabel: 'Uses: Avocado, Bread, Egg',
-    ),
-    _FeaturedRecipeEntry(
-      recipeId: 4,
-      matchLabel: '90% Match',
-      usesLabel: 'Uses: Lettuce, Tomato, Cucumber',
-    ),
-    _FeaturedRecipeEntry(
-      recipeId: 6,
-      matchLabel: '91% Match',
-      usesLabel: 'Uses: Noodles, Broth, Miso',
-    ),
-  ];
 
   final PageController _pageController = PageController();
   Timer? _autoSlideTimer;
   int _currentIndex = 0;
+  List<Recipe> _recipes = [];
+  bool _loaded = false;
 
   @override
   void initState() {
     super.initState();
-    _startAutoSlide();
+    _loadRecipes();
+  }
+
+  Future<void> _loadRecipes() async {
+    try {
+      final recipes = await fetchRecipes();
+      if (mounted) {
+        setState(() {
+          _recipes = recipes.take(4).toList();
+          _loaded = true;
+        });
+        if (_recipes.isNotEmpty) _startAutoSlide();
+      }
+    } catch (_) {
+      if (mounted) setState(() => _loaded = true);
+    }
   }
 
   @override
@@ -487,10 +524,8 @@ class _FeaturedRecipeCardState extends State<_FeaturedRecipeCard> {
   void _startAutoSlide() {
     _autoSlideTimer?.cancel();
     _autoSlideTimer = Timer.periodic(_autoSlideInterval, (_) {
-      if (!mounted || !_pageController.hasClients) {
-        return;
-      }
-      final nextIndex = (_currentIndex + 1) % _entries.length;
+      if (!mounted || !_pageController.hasClients || _recipes.isEmpty) return;
+      final nextIndex = (_currentIndex + 1) % _recipes.length;
       _pageController.animateToPage(
         nextIndex,
         duration: const Duration(milliseconds: 420),
@@ -500,13 +535,7 @@ class _FeaturedRecipeCardState extends State<_FeaturedRecipeCard> {
   }
 
   void _goToIndex(int index) {
-    if (index == _currentIndex) {
-      _startAutoSlide();
-      return;
-    }
-    if (!_pageController.hasClients) {
-      return;
-    }
+    if (!_pageController.hasClients) return;
     _pageController.animateToPage(
       index,
       duration: const Duration(milliseconds: 340),
@@ -515,19 +544,37 @@ class _FeaturedRecipeCardState extends State<_FeaturedRecipeCard> {
     _startAutoSlide();
   }
 
-  Recipe _findRecipe(int recipeId) {
-    return Recipe(
-      id: recipeId,
-      name: '',
-      category: 'Korean',
-      imageUrl: '',
-      rating: 0,
-      cookTimeMinutes: 0,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    if (!_loaded) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(30),
+        child: Container(
+          height: 300,
+          color: const Color(0xFF2B2A31),
+          alignment: Alignment.center,
+          child: const CircularProgressIndicator(
+            strokeWidth: 2,
+            color: Color(0xFFF39A57),
+          ),
+        ),
+      );
+    }
+    if (_recipes.isEmpty) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(30),
+        child: Container(
+          height: 180,
+          color: const Color(0xFF2B2A31),
+          alignment: Alignment.center,
+          child: const Text(
+            'No recipes yet',
+            style: TextStyle(color: Colors.white70, fontSize: 16),
+          ),
+        ),
+      );
+    }
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(30),
       child: SizedBox(
@@ -536,48 +583,37 @@ class _FeaturedRecipeCardState extends State<_FeaturedRecipeCard> {
           children: [
             PageView.builder(
               controller: _pageController,
-              itemCount: _entries.length,
-              onPageChanged: (index) {
-                setState(() {
-                  _currentIndex = index;
-                });
-              },
+              itemCount: _recipes.length,
+              onPageChanged: (index) => setState(() => _currentIndex = index),
               itemBuilder: (context, index) {
-                final entry = _entries[index];
-                final recipe = _findRecipe(entry.recipeId);
-                return _FeaturedRecipeSlide(recipe: recipe, entry: entry);
+                return _FeaturedRecipeSlide(recipe: _recipes[index]);
               },
             ),
             Positioned(
               top: 20,
               right: 16,
               child: Column(
-                children: List.generate(_entries.length, (index) {
+                children: List.generate(_recipes.length, (index) {
                   final isActive = _currentIndex == index;
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 3),
-                    child: MouseRegion(
-                      opaque: true,
-                      onEnter: (_) => _goToIndex(index),
-                      onHover: (_) => _goToIndex(index),
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.translucent,
-                        onTap: () => _goToIndex(index),
-                        child: Container(
-                          width: 28,
-                          height: 28,
-                          color: Colors.transparent,
-                          alignment: Alignment.center,
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 220),
-                            width: isActive ? 12 : 8,
-                            height: isActive ? 12 : 8,
-                            decoration: BoxDecoration(
-                              color: isActive
-                                  ? const Color(0xFFF39A57)
-                                  : Colors.white.withValues(alpha: 0.78),
-                              shape: BoxShape.circle,
-                            ),
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.translucent,
+                      onTap: () => _goToIndex(index),
+                      child: Container(
+                        width: 28,
+                        height: 28,
+                        color: Colors.transparent,
+                        alignment: Alignment.center,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 220),
+                          width: isActive ? 12 : 8,
+                          height: isActive ? 12 : 8,
+                          decoration: BoxDecoration(
+                            color: isActive
+                                ? const Color(0xFFF39A57)
+                                : Colors.white.withValues(alpha: 0.78),
+                            shape: BoxShape.circle,
                           ),
                         ),
                       ),
@@ -594,53 +630,55 @@ class _FeaturedRecipeCardState extends State<_FeaturedRecipeCard> {
 }
 
 class _FeaturedRecipeSlide extends StatelessWidget {
-  const _FeaturedRecipeSlide({required this.recipe, required this.entry});
+  const _FeaturedRecipeSlide({required this.recipe});
 
   final Recipe recipe;
-  final _FeaturedRecipeEntry entry;
-
-  String _toHighResImage(String imageUrl) {
-    return imageUrl
-        .replaceFirst('w=400', 'w=1200')
-        .replaceFirst('h=300', 'h=900');
-  }
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
         Positioned.fill(
-          child: Image.network(
-            _toHighResImage(recipe.imageUrl),
-            fit: BoxFit.cover,
-            loadingBuilder: (context, child, loadingProgress) {
-              if (loadingProgress == null) {
-                return child;
-              }
-              return Container(
-                color: const Color(0xFF2B2A31),
-                alignment: Alignment.center,
-                child: const CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Color(0xFFF39A57),
-                ),
-              );
-            },
-            errorBuilder: (context, error, stackTrace) {
-              return Container(
-                color: const Color(0xFF2B2A31),
-                alignment: Alignment.center,
-                child: Text(
-                  recipe.name,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
+          child: recipe.imageUrl.isNotEmpty
+              ? Image.network(
+                  recipe.imageUrl,
+                  fit: BoxFit.cover,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Container(
+                      color: const Color(0xFF2B2A31),
+                      alignment: Alignment.center,
+                      child: const CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Color(0xFFF39A57),
+                      ),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    color: const Color(0xFF2B2A31),
+                    alignment: Alignment.center,
+                    child: Text(
+                      recipe.name,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                )
+              : Container(
+                  color: const Color(0xFF2B2A31),
+                  alignment: Alignment.center,
+                  child: Text(
+                    recipe.name,
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
-              );
-            },
-          ),
         ),
         Positioned.fill(
           child: Container(
@@ -655,36 +693,6 @@ class _FeaturedRecipeSlide extends StatelessWidget {
                 ],
                 stops: const [0.0, 0.45, 1.0],
               ),
-            ),
-          ),
-        ),
-        Positioned(
-          top: 20,
-          left: 16,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-            decoration: BoxDecoration(
-              color: const Color(0xFF8EE5C5),
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.auto_awesome,
-                  size: 14,
-                  color: Color(0xFFFFD65C),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  entry.matchLabel,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
             ),
           ),
         ),
@@ -707,29 +715,14 @@ class _FeaturedRecipeSlide extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 245),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.restaurant_menu_rounded,
-                      size: 15,
-                      color: Colors.white70,
-                    ),
-                    const SizedBox(width: 7),
-                    Expanded(
-                      child: Text(
-                        entry.usesLabel,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
+              const SizedBox(height: 6),
+              Text(
+                recipe.category.toUpperCase(),
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
                 ),
               ),
               const SizedBox(height: 16),
@@ -771,9 +764,7 @@ class _FeaturedRecipeSlide extends StatelessWidget {
                           width: 54,
                           height: 54,
                           decoration: BoxDecoration(
-                            color: const Color(
-                              0xFF58473B,
-                            ).withValues(alpha: 0.7),
+                            color: const Color(0xFF58473B).withValues(alpha: 0.7),
                             borderRadius: BorderRadius.circular(15),
                           ),
                           child: Icon(
@@ -796,198 +787,4 @@ class _FeaturedRecipeSlide extends StatelessWidget {
       ],
     );
   }
-}
-
-class _FeaturedRecipeEntry {
-  const _FeaturedRecipeEntry({
-    required this.recipeId,
-    required this.matchLabel,
-    required this.usesLabel,
-  });
-
-  final int recipeId;
-  final String matchLabel;
-  final String usesLabel;
-}
-
-class _MilkIllustration extends StatelessWidget {
-  const _MilkIllustration();
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 30,
-      height: 42,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Positioned(
-            top: 3,
-            child: Container(
-              width: 18,
-              height: 5,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF9F9F7),
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: const Color(0xFFE2E2DE)),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: 0,
-            child: Container(
-              width: 22,
-              height: 32,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Color(0xFFF7F7F5), Color(0xFFE3E2DD)],
-                ),
-                borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: const Color(0xFFD2D2CE)),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SpinachIllustration extends StatelessWidget {
-  const _SpinachIllustration();
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 40,
-      height: 42,
-      child: CustomPaint(painter: _SpinachPainter()),
-    );
-  }
-}
-
-class _EggIllustration extends StatelessWidget {
-  const _EggIllustration();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 26,
-      height: 34,
-      decoration: BoxDecoration(
-        color: const Color(0xFFF5F3F0),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x14000000),
-            blurRadius: 4,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ButterIllustration extends StatelessWidget {
-  const _ButterIllustration();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 36,
-      height: 26,
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFD96F),
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x11000000),
-            blurRadius: 4,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Align(
-        alignment: Alignment.bottomCenter,
-        child: Container(
-          width: 36,
-          height: 8,
-          decoration: const BoxDecoration(
-            color: Color(0xFFF3C853),
-            borderRadius: BorderRadius.only(
-              bottomLeft: Radius.circular(8),
-              bottomRight: Radius.circular(8),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SpinachPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final leafPaint = Paint()..color = const Color(0xFF4F9A39);
-    final stemPaint = Paint()
-      ..color = const Color(0xFF2F6A1E)
-      ..strokeWidth = 2
-      ..strokeCap = StrokeCap.round;
-
-    final leftLeaf = Path()
-      ..moveTo(size.width * 0.45, size.height * 0.92)
-      ..quadraticBezierTo(
-        size.width * 0.18,
-        size.height * 0.70,
-        size.width * 0.14,
-        size.height * 0.38,
-      )
-      ..quadraticBezierTo(
-        size.width * 0.22,
-        size.height * 0.10,
-        size.width * 0.46,
-        size.height * 0.12,
-      )
-      ..quadraticBezierTo(
-        size.width * 0.48,
-        size.height * 0.58,
-        size.width * 0.45,
-        size.height * 0.92,
-      );
-
-    final rightLeaf = Path()
-      ..moveTo(size.width * 0.46, size.height * 0.92)
-      ..quadraticBezierTo(
-        size.width * 0.78,
-        size.height * 0.70,
-        size.width * 0.84,
-        size.height * 0.36,
-      )
-      ..quadraticBezierTo(
-        size.width * 0.76,
-        size.height * 0.10,
-        size.width * 0.48,
-        size.height * 0.14,
-      )
-      ..quadraticBezierTo(
-        size.width * 0.44,
-        size.height * 0.56,
-        size.width * 0.46,
-        size.height * 0.92,
-      );
-
-    canvas.drawPath(leftLeaf, leafPaint);
-    canvas.drawPath(rightLeaf, leafPaint);
-    canvas.drawLine(
-      Offset(size.width * 0.48, size.height * 0.18),
-      Offset(size.width * 0.46, size.height * 0.95),
-      stemPaint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

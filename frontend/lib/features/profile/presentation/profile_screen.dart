@@ -1,136 +1,177 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/api/api_client.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../auth/data/auth_service.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
   @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  Map<String, dynamic>? _userData;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    try {
+      final response = await ApiClient.instance.dio.get('/auth/me');
+      if (mounted) {
+        setState(() {
+          _userData = response.data as Map<String, dynamic>;
+          _isLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _signOut() async {
+    await AuthService.signOutAll();
+    if (mounted) context.go('/login');
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final nickname = _userData?['nickname'] as String? ?? '';
+    final avatarUrl = _userData?['avatar_url'] as String?;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF2F4F7),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.only(bottom: 28),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _ProfileHeader(
-                onEditProfile: () => context.push('/profile/edit'),
-              ),
-              const SizedBox(height: 20),
-              const _SectionTitle('PREFERENCES'),
-              _MenuCard(
-                items: [
-                  _MenuItemData(
-                    title: 'Allergies',
-                    subtitle: 'Peanuts, Shellfish',
-                    icon: Icons.warning_amber_rounded,
-                    iconBg: const Color(0xFFFFF2E4),
-                    iconColor: const Color(0xFFFC9946),
-                    onTap: () => context.push('/profile/allergies'),
-                  ),
-                  _MenuItemData(
-                    title: 'Disliked Ingredients',
-                    subtitle: 'Eggplant, Cucumber',
-                    icon: Icons.not_interested_rounded,
-                    iconBg: const Color(0xFFFFF2E4),
-                    iconColor: const Color(0xFFFC9946),
-                    onTap: () => context.push('/profile/disliked'),
-                  ),
-                  _MenuItemData(
-                    title: 'Kitchen Tools',
-                    subtitle: 'Air Fryer, Blender',
-                    icon: Icons.blender_outlined,
-                    iconBg: const Color(0xFFFFF2E4),
-                    iconColor: const Color(0xFFFC9946),
-                    onTap: () => context.push('/profile/tools'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 18),
-              const _SectionTitle('MANAGEMENT'),
-              _MenuCard(
-                items: [
-                  _MenuItemData(
-                    title: 'Saved Recipes',
-                    subtitle: '12 recipes',
-                    icon: Icons.bookmark_border_rounded,
-                    iconBg: const Color(0xFFEAF8F0),
-                    iconColor: const Color(0xFF31BE88),
-                    onTap: () => context.push('/saved-recipes'),
-                  ),
-                  _MenuItemData(
-                    title: 'Cooked Recipes',
-                    subtitle: '16 recipes',
-                    icon: Icons.soup_kitchen_outlined,
-                    iconBg: const Color(0xFFEAF8F0),
-                    iconColor: const Color(0xFF31BE88),
-                    onTap: () => context.push('/profile/cooked'),
-                  ),
-                  _MenuItemData(
-                    title: 'My Fridges',
-                    subtitle: 'Main, Kimchi, Wine Cooler',
-                    icon: Icons.kitchen_outlined,
-                    iconBg: const Color(0xFFEAF8F0),
-                    iconColor: const Color(0xFF31BE88),
-                    onTap: () => context.push('/profile/fridges'),
-                  ),
-                  _MenuItemData(
-                    title: 'Settings',
-                    subtitle: '',
-                    icon: Icons.settings_outlined,
-                    iconBg: const Color(0xFFF2F4F8),
-                    iconColor: const Color(0xFF6F7C93),
-                    onTap: () => context.push('/profile/settings'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 22),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: OutlinedButton.icon(
-                  onPressed: () {},
-                  icon: const Icon(
-                    Icons.logout_rounded,
-                    color: Color(0xFFFF3B30),
-                  ),
-                  label: const Text(
-                    'Sign Out',
-                    style: TextStyle(
-                      color: Color(0xFFFF3B30),
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
+                padding: const EdgeInsets.only(bottom: 28),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _ProfileHeader(
+                      nickname: nickname,
+                      avatarUrl: avatarUrl,
+                      onEditProfile: () => context.push('/profile/edit'),
                     ),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(62),
-                    side: const BorderSide(color: Color(0xFFE1E4EA)),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                    const SizedBox(height: 20),
+                    const _SectionTitle('PREFERENCES'),
+                    _MenuCard(
+                      items: [
+                        _MenuItemData(
+                          title: 'Allergies',
+                          icon: Icons.warning_amber_rounded,
+                          iconBg: const Color(0xFFFFF2E4),
+                          iconColor: const Color(0xFFFC9946),
+                          onTap: () => context.push('/profile/allergies'),
+                        ),
+                        _MenuItemData(
+                          title: 'Disliked Ingredients',
+                          icon: Icons.not_interested_rounded,
+                          iconBg: const Color(0xFFFFF2E4),
+                          iconColor: const Color(0xFFFC9946),
+                          onTap: () => context.push('/profile/disliked'),
+                        ),
+                        _MenuItemData(
+                          title: 'Kitchen Tools',
+                          icon: Icons.blender_outlined,
+                          iconBg: const Color(0xFFFFF2E4),
+                          iconColor: const Color(0xFFFC9946),
+                          onTap: () => context.push('/profile/tools'),
+                        ),
+                      ],
                     ),
-                    backgroundColor: Colors.white,
-                  ),
+                    const SizedBox(height: 18),
+                    const _SectionTitle('MANAGEMENT'),
+                    _MenuCard(
+                      items: [
+                        _MenuItemData(
+                          title: 'Saved Recipes',
+                          icon: Icons.bookmark_border_rounded,
+                          iconBg: const Color(0xFFEAF8F0),
+                          iconColor: const Color(0xFF31BE88),
+                          onTap: () => context.push('/saved-recipes'),
+                        ),
+                        _MenuItemData(
+                          title: 'Cooked Recipes',
+                          icon: Icons.soup_kitchen_outlined,
+                          iconBg: const Color(0xFFEAF8F0),
+                          iconColor: const Color(0xFF31BE88),
+                          onTap: () => context.push('/profile/cooked'),
+                        ),
+                        _MenuItemData(
+                          title: 'My Fridges',
+                          icon: Icons.kitchen_outlined,
+                          iconBg: const Color(0xFFEAF8F0),
+                          iconColor: const Color(0xFF31BE88),
+                          onTap: () => context.push('/profile/fridges'),
+                        ),
+                        _MenuItemData(
+                          title: 'Settings',
+                          icon: Icons.settings_outlined,
+                          iconBg: const Color(0xFFF2F4F8),
+                          iconColor: const Color(0xFF6F7C93),
+                          onTap: () => context.push('/profile/settings'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 22),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: OutlinedButton.icon(
+                        onPressed: _signOut,
+                        icon: const Icon(
+                          Icons.logout_rounded,
+                          color: Color(0xFFFF3B30),
+                        ),
+                        label: const Text(
+                          'Sign Out',
+                          style: TextStyle(
+                            color: Color(0xFFFF3B30),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(62),
+                          side: const BorderSide(color: Color(0xFFE1E4EA)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          backgroundColor: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-        ),
       ),
     );
   }
 }
 
 class _ProfileHeader extends StatelessWidget {
+  final String nickname;
+  final String? avatarUrl;
   final VoidCallback onEditProfile;
 
-  const _ProfileHeader({required this.onEditProfile});
+  const _ProfileHeader({
+    required this.nickname,
+    required this.avatarUrl,
+    required this.onEditProfile,
+  });
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 320,
+      height: 280,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
@@ -156,28 +197,31 @@ class _ProfileHeader extends StatelessWidget {
                         color: const Color(0xFFE8B780),
                         width: 2,
                       ),
-                      image: const DecorationImage(
-                        image: NetworkImage(
-                          'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=300&h=300&fit=crop',
-                        ),
-                        fit: BoxFit.cover,
-                      ),
+                      color: const Color(0xFFF0E0C8),
+                      image: (avatarUrl != null && avatarUrl!.isNotEmpty)
+                          ? DecorationImage(
+                              image: NetworkImage(avatarUrl!),
+                              fit: BoxFit.cover,
+                            )
+                          : null,
                     ),
+                    child: (avatarUrl == null || avatarUrl!.isEmpty)
+                        ? const Icon(
+                            Icons.person,
+                            size: 44,
+                            color: Color(0xFFB08060),
+                          )
+                        : null,
                   ),
                 ),
                 const SizedBox(height: 12),
-                const Text(
-                  'Alex User',
-                  style: TextStyle(
+                Text(
+                  nickname.isNotEmpty ? nickname : 'User',
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF162239),
                   ),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Master Chef in Training',
-                  style: TextStyle(fontSize: 13, color: Color(0xFF4F5D74)),
                 ),
                 const SizedBox(height: 14),
                 OutlinedButton(
@@ -201,83 +245,8 @@ class _ProfileHeader extends StatelessWidget {
               ],
             ),
           ),
-          Positioned(
-            left: 20,
-            right: 20,
-            bottom: 0,
-            child: Container(
-              height: 72,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.07),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: const Row(
-                children: [
-                  _StatItem(value: '12', label: 'SAVED'),
-                  _Divider(),
-                  _StatItem(value: '16', label: 'COOKED'),
-                  _Divider(),
-                  _StatItem(value: '3', label: 'FRIDGES'),
-                ],
-              ),
-            ),
-          ),
         ],
       ),
-    );
-  }
-}
-
-class _StatItem extends StatelessWidget {
-  final String value;
-  final String label;
-
-  const _StatItem({required this.value, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF222C3E),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 10,
-              color: Color(0xFF8EA0BD),
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Divider extends StatelessWidget {
-  const _Divider();
-
-  @override
-  Widget build(BuildContext context) {
-    return const SizedBox(
-      height: 36,
-      child: VerticalDivider(color: Color(0xFFE9EDF3), width: 1),
     );
   }
 }
@@ -338,7 +307,6 @@ class _MenuCard extends StatelessWidget {
 
 class _MenuItemData {
   final String title;
-  final String subtitle;
   final IconData icon;
   final Color iconBg;
   final Color iconColor;
@@ -346,7 +314,6 @@ class _MenuItemData {
 
   const _MenuItemData({
     required this.title,
-    required this.subtitle,
     required this.icon,
     required this.iconBg,
     required this.iconColor,
@@ -365,7 +332,7 @@ class _MenuItem extends StatelessWidget {
       onTap: item.onTap,
       borderRadius: BorderRadius.circular(16),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Row(
           children: [
             Container(
@@ -379,28 +346,13 @@ class _MenuItem extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.title,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF1A2436),
-                    ),
-                  ),
-                  if (item.subtitle.isNotEmpty) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      item.subtitle,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF8EA0BD),
-                      ),
-                    ),
-                  ],
-                ],
+              child: Text(
+                item.title,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1A2436),
+                ),
               ),
             ),
             const Icon(

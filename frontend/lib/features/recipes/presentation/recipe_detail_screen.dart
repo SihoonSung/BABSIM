@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/api/api_client.dart';
-import '../data/recipe.dart';
 
 class RecipeDetailScreen extends StatefulWidget {
   final int recipeId;
@@ -199,9 +198,15 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       const _SectionTitle(title: 'Ingredients'),
                       const SizedBox(height: 14),
                       _IngredientsCard(
-                        items: rawIngredients
-                            .map((e) => '${(e as Map)['amount']}')
-                            .toList(),
+                        items: rawIngredients.map((e) {
+                          final map = e as Map;
+                          final name = (map['name_ko'] ?? map['name'] ?? '').toString();
+                          final amount = (map['amount'] ?? '').toString();
+                          if (name.isNotEmpty && amount.isNotEmpty) {
+                            return '$name  $amount';
+                          }
+                          return name.isNotEmpty ? name : amount;
+                        }).toList(),
                       ),
                     ],
                     if (instructionLines.isNotEmpty) ...[

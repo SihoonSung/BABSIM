@@ -57,10 +57,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
         nickname: _nicknameController.text,
       );
 
-      if (!mounted) {
-        return;
-      }
-      context.go('/home');
+      if (!mounted) return;
+      // 신규 가입은 항상 온보딩으로
+      context.go('/onboarding');
     } catch (e) {
       _showToast('Sign up failed: $e');
     } finally {
