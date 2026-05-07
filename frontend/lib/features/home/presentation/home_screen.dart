@@ -112,7 +112,7 @@ class _HeaderState extends State<_Header> {
           return nickname;
         }
       }
-    } catch (_) {}
+    } catch (e) {}
     return 'User';
   }
 
@@ -356,7 +356,7 @@ class _ExpiringSoonListState extends State<_ExpiringSoonList> {
           _loaded = true;
         });
       }
-    } catch (_) {
+    } catch (e) {
       if (mounted) setState(() => _loaded = true);
     }
   }
@@ -509,7 +509,7 @@ class _FeaturedRecipeCardState extends State<_FeaturedRecipeCard> {
         });
         if (_recipes.isNotEmpty) _startAutoSlide();
       }
-    } catch (_) {
+    } catch (e) {
       if (mounted) setState(() => _loaded = true);
     }
   }

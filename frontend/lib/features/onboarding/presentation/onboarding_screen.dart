@@ -50,7 +50,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       if (nickname.isNotEmpty) {
         _nicknameController.text = nickname;
       }
-    } catch (_) {}
+    } catch (e) {}
   }
 
   @override
@@ -94,7 +94,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('onboarding_done', true);
-    } catch (_) {
+    } catch (e) {
       // 저장 실패해도 홈으로 이동
     }
     if (mounted) context.go('/home');

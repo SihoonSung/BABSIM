@@ -62,7 +62,7 @@ class _PreferenceEditorScreenState extends State<PreferenceEditorScreen> {
               .toList() ??
           [];
       if (mounted) setState(() { _items.addAll(list); _isLoading = false; });
-    } catch (_) {
+    } catch (e) {
       if (mounted) setState(() => _isLoading = false);
     }
   }
@@ -75,7 +75,7 @@ class _PreferenceEditorScreenState extends State<PreferenceEditorScreen> {
         '/preferences/${widget.kind}',
         data: {'kind': widget.kind, 'values': _items},
       );
-    } catch (_) {}
+    } catch (e) {}
     if (mounted) setState(() => _isSaving = false);
   }
 

@@ -23,6 +23,7 @@ class _FridgeScreenState extends State<FridgeScreen> {
   String _searchQuery = '';
   bool _isEditing = false;
   bool _isLoading = true;
+  bool _hasError = false;
   String? _userId;
 
   @override
@@ -53,8 +54,8 @@ class _FridgeScreenState extends State<FridgeScreen> {
           _isLoading = false;
         });
       }
-    } catch (_) {
-      if (mounted) setState(() => _isLoading = false);
+    } catch (e) {
+      if (mounted) setState(() { _isLoading = false; _hasError = true; });
     }
   }
 
@@ -98,7 +99,7 @@ class _FridgeScreenState extends State<FridgeScreen> {
     try {
       await ApiClient.instance.dio.delete('/fridge/$_userId/$id');
       setState(() => _allItems.removeWhere((e) => e.id == id));
-    } catch (_) {}
+    } catch (e) {}
   }
 
   Future<void> _updateItem(FridgeItem updated) async {
@@ -112,7 +113,7 @@ class _FridgeScreenState extends State<FridgeScreen> {
         final index = _allItems.indexWhere((e) => e.id == updated.id);
         if (index != -1) _allItems[index] = updated;
       });
-    } catch (_) {}
+    } catch (e) {}
   }
 
   void _openDetail(FridgeItem item) {
@@ -155,7 +156,7 @@ class _FridgeScreenState extends State<FridgeScreen> {
             if (id != null && ingredientId != null) {
               await _fetchItems();
             }
-          } catch (_) {}
+          } catch (e) {}
         },
       ),
     );
@@ -254,6 +255,19 @@ class _FridgeScreenState extends State<FridgeScreen> {
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
+                : _hasError
+                ? Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.wifi_off_rounded, size: 48, color: Color(0xFFA3AEC2)),
+                        const SizedBox(height: 12),
+                        const Text('냉장고 데이터를 불러오지 못했어요.', style: TextStyle(color: Color(0xFF6F7C93))),
+                        const SizedBox(height: 12),
+                        TextButton(onPressed: () { setState(() { _isLoading = true; _hasError = false; }); _fetchItems(); }, child: const Text('다시 시도')),
+                      ],
+                    ),
+                  )
                 : _filtered.isEmpty
                 ? const _EmptyState()
                 : GridView.builder(

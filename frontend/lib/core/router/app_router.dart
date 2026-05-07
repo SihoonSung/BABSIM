@@ -106,9 +106,15 @@ final appRouter = GoRouter(
                 ),
                 GoRoute(
                   path: 'photos/:recipeId',
-                  builder: (context, state) => CookedRecipePhotosScreen(
-                    recipeId: state.pathParameters['recipeId']!,
-                  ),
+                  builder: (context, state) {
+                    final recipeId = state.pathParameters['recipeId'];
+                    if (recipeId == null || recipeId.isEmpty) {
+                      return const Scaffold(
+                        body: Center(child: Text('잘못된 레시피 ID입니다.')),
+                      );
+                    }
+                    return CookedRecipePhotosScreen(recipeId: recipeId);
+                  },
                 ),
               ],
             ),

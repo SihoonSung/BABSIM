@@ -15,6 +15,7 @@ class RecipeDetailScreen extends StatefulWidget {
 class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   Map<String, dynamic>? _recipeDetail;
   bool _isLoading = true;
+  bool _hasError = false;
 
   @override
   void initState() {
@@ -31,8 +32,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           _isLoading = false;
         });
       }
-    } catch (_) {
-      if (mounted) setState(() => _isLoading = false);
+    } catch (e) {
+      if (mounted) setState(() { _isLoading = false; _hasError = true; });
     }
   }
 
@@ -45,11 +46,25 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       );
     }
 
-    if (_recipeDetail == null) {
+    if (_hasError || _recipeDetail == null) {
       return Scaffold(
         backgroundColor: const Color(0xFFF4F4F3),
         appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0),
-        body: const Center(child: Text('레시피를 불러올 수 없어요.')),
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.wifi_off_rounded, size: 48, color: Color(0xFFA3AEC2)),
+              const SizedBox(height: 12),
+              const Text('레시피를 불러올 수 없어요.', style: TextStyle(color: Color(0xFF6F7C93))),
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed: () { setState(() { _isLoading = true; _hasError = false; _recipeDetail = null; }); _loadRecipe(); },
+                child: const Text('다시 시도'),
+              ),
+            ],
+          ),
+        ),
       );
     }
 

@@ -15,6 +15,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   Map<String, dynamic>? _userData;
   bool _isLoading = true;
+  bool _hasError = false;
 
   @override
   void initState() {
@@ -31,8 +32,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _isLoading = false;
         });
       }
-    } catch (_) {
-      if (mounted) setState(() => _isLoading = false);
+    } catch (e) {
+      if (mounted) setState(() { _isLoading = false; _hasError = true; });
     }
   }
 
@@ -51,6 +52,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
       body: SafeArea(
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
+            : _hasError
+            ? Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.wifi_off_rounded, size: 48, color: Color(0xFFA3AEC2)),
+                    const SizedBox(height: 12),
+                    const Text('프로필을 불러오지 못했어요.', style: TextStyle(color: Color(0xFF6F7C93))),
+                    const SizedBox(height: 12),
+                    TextButton(onPressed: () { setState(() { _isLoading = true; _hasError = false; }); _loadProfile(); }, child: const Text('다시 시도')),
+                  ],
+                ),
+              )
             : SingleChildScrollView(
                 padding: const EdgeInsets.only(bottom: 28),
                 child: Column(

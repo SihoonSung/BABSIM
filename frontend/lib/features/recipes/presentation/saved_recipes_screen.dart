@@ -20,6 +20,7 @@ class _SavedRecipesScreenState extends State<SavedRecipesScreen> {
   RecipeFilter _filter = RecipeFilter.empty;
   List<Recipe> _allRecipes = [];
   bool _isLoading = true;
+  bool _hasError = false;
 
   @override
   void initState() {
@@ -36,8 +37,8 @@ class _SavedRecipesScreenState extends State<SavedRecipesScreen> {
           _isLoading = false;
         });
       }
-    } catch (_) {
-      if (mounted) setState(() => _isLoading = false);
+    } catch (e) {
+      if (mounted) setState(() { _isLoading = false; _hasError = true; });
     }
   }
 
@@ -239,6 +240,19 @@ class _SavedRecipesScreenState extends State<SavedRecipesScreen> {
                 Expanded(
                   child: _isLoading
                       ? const Center(child: CircularProgressIndicator())
+                      : _hasError
+                      ? Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.wifi_off_rounded, size: 48, color: Color(0xFFA3AEC2)),
+                              const SizedBox(height: 12),
+                              const Text('레시피를 불러오지 못했어요.', style: TextStyle(color: Color(0xFF6F7C93))),
+                              const SizedBox(height: 12),
+                              TextButton(onPressed: () { setState(() { _isLoading = true; _hasError = false; }); _loadRecipes(); }, child: const Text('다시 시도')),
+                            ],
+                          ),
+                        )
                       : recipes.isEmpty
                       ? const _SavedRecipesEmptyState()
                       : GridView.builder(

@@ -60,7 +60,7 @@ class _LoginScreenState extends State<LoginScreen> {
       await AuthService.signInWithEmailPassword(email: email, password: password);
       if (!mounted) return;
       await _navigateAfterAuth();
-    } catch (_) {
+    } catch (e) {
       _showToast('Sign in failed.');
     } finally {
       if (mounted) setState(() => _isEmailLoading = false);

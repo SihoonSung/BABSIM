@@ -49,7 +49,7 @@ class AuthService {
 
     try {
       await _googleSignIn.signOut();
-    } catch (_) {}
+    } catch (e) {}
   }
 
   static Future<void> signInWithApple() async {
@@ -81,7 +81,7 @@ class AuthService {
     // Force account picker every time the Google button is tapped.
     try {
       await _googleSignIn.signOut();
-    } catch (_) {}
+    } catch (e) {}
 
     final account = await _googleSignIn.signIn();
     if (account == null) {
